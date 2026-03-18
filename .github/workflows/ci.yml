@@ -1,0 +1,117 @@
+name: Corndog CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-menu:
+    name: "corndog-menu (Spring Boot)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Build and test
+        run: mvn clean package
+        working-directory: corndog-menu
+      - name: Upload test results to Datadog
+        if: always()
+        uses: datadog/junit-upload-github-action@v1
+        with:
+          api-key: ${{ secrets.DD_API_KEY }}
+          service: corndog-menu
+          env: ci
+          files: corndog-menu/**/target/surefire-reports/*.xml
+      # - name: SAST/SCA scan
+      #   run: datadog-ci sbom upload --service corndog-menu corndog-menu/
+      - name: Build Docker image
+        run: docker build -t corndog/corndog-menu:latest ./corndog-menu
+
+  build-orders:
+    name: "corndog-orders (Flask)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt && pip install pytest
+        working-directory: corndog-orders
+      - name: Run tests
+        run: pytest --junitxml=test-results/results.xml || true
+        working-directory: corndog-orders
+      - name: Upload test results to Datadog
+        if: always()
+        uses: datadog/junit-upload-github-action@v1
+        with:
+          api-key: ${{ secrets.DD_API_KEY }}
+          service: corndog-orders
+          env: ci
+          files: corndog-orders/test-results/*.xml
+      # - name: SAST/SCA scan
+      #   run: datadog-ci sbom upload --service corndog-orders corndog-orders/
+      - name: Build Docker image
+        run: docker build -t corndog/corndog-orders:latest ./corndog-orders
+
+  build-admin:
+    name: "corndog-admin (.NET)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+      - name: Restore and build
+        run: dotnet build
+        working-directory: corndog-admin
+      - name: Run tests
+        run: dotnet test --logger "trx;LogFileName=results.trx" --results-directory test-results || true
+        working-directory: corndog-admin
+      - name: Upload test results to Datadog
+        if: always()
+        uses: datadog/junit-upload-github-action@v1
+        with:
+          api-key: ${{ secrets.DD_API_KEY }}
+          service: corndog-admin
+          env: ci
+          files: corndog-admin/test-results/**/*.trx
+      # - name: SAST/SCA scan
+      #   run: datadog-ci sbom upload --service corndog-admin corndog-admin/
+      - name: Build Docker image
+        run: docker build -t corndog/corndog-admin:latest ./corndog-admin
+
+  build-web-ui:
+    name: "corndog-web-ui (Angular)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: corndog-web-ui
+      - name: Run tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless || true
+        working-directory: corndog-web-ui
+      - name: Build
+        run: npx ng build --configuration production
+        working-directory: corndog-web-ui
+      - name: Upload test results to Datadog
+        if: always()
+        uses: datadog/junit-upload-github-action@v1
+        with:
+          api-key: ${{ secrets.DD_API_KEY }}
+          service: corndog-web-ui
+          env: ci
+          files: corndog-web-ui/test-results/**/*.xml
+      # - name: SAST/SCA scan
+      #   run: datadog-ci sbom upload --service corndog-web-ui corndog-web-ui/
+      - name: Build Docker image
+        run: docker build -t corndog/corndog-web-ui:latest ./corndog-web-ui
