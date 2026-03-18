@@ -1,0 +1,43 @@
+# Java / Maven
+corndog-menu/target/
+*.class
+*.jar
+*.war
+
+# Python
+corndog-orders/__pycache__/
+corndog-orders/**/__pycache__/
+corndog-orders/**/**/__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# .NET
+corndog-admin/bin/
+corndog-admin/obj/
+corndog-admin/src/bin/
+corndog-admin/src/obj/
+
+# Node / Angular
+corndog-web-ui/node_modules/
+corndog-web-ui/dist/
+corndog-web-ui/.angular/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+*.env.local
+
+# Docker
+docker-compose.override.yml
+
+# Exports (created by command injection demo)
+exports/
