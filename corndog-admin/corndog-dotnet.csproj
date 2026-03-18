@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CornDog</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.8" />
+    <!-- Vulnerable: CVE-2023-29331 -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
+    <!-- Vulnerable: CVE-2023-44487 (HTTP/2 Rapid Reset) -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <!-- Vulnerable: CVE-2024-21319 -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="1.1.0" />
+    <PackageReference Include="Datadog.Trace.Bundle" Version="3.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="src\appsettings.json" CopyToOutputDirectory="PreserveNewest" Link="appsettings.json" />
+  </ItemGroup>
+</Project>
