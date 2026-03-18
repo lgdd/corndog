@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and fill in values
+dd_api_key = ""
+dd_site    = "datadoghq.com"
+dd_env     = "corndog-260318"
+
+aws_region    = "eu-north-1"
+instance_type = "t3.xlarge"
+
+# SSH key pair name (optional — SSM access works without it)
+# key_name = "my-keypair"
+
+# Git clone URL for this repo
+repo_url    = ""
+repo_branch = "main"
