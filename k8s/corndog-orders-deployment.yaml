@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-orders
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-orders
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-orders
+    spec:
+      containers:
+        - name: corndog-orders
+          image: corndog/corndog-orders:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: DATABASE_URL
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_SERVICE
+              value: corndog-orders
+            - name: DD_ENV
+              value: demo
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_APPSEC_ENABLED
+              value: "true"

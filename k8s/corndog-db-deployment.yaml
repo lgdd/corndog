@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-db
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-db
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-db
+    spec:
+      containers:
+        - name: corndog-db
+          image: postgres:14
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          emptyDir: {}

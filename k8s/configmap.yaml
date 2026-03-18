@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: corndog-config
+  namespace: corndog
+  labels:
+    app: corndog
+    component: config
+data:
+  POSTGRES_DB: corndog
+  POSTGRES_USER: corndog
+  POSTGRES_PASSWORD: corndog123
+  DATABASE_URL: postgresql://corndog:corndog123@corndog-db:5432/corndog
+  SPRING_DATASOURCE_URL: jdbc:postgresql://corndog-db:5432/corndog
+  SPRING_DATASOURCE_USERNAME: corndog
+  SPRING_DATASOURCE_PASSWORD: corndog123
+  DOTNET_CONNECTION_STRING: "Host=corndog-db;Port=5432;Database=corndog;Username=corndog;Password=corndog123"

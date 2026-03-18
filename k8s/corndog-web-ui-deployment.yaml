@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-web-ui
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-web-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-web-ui
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-web-ui
+    spec:
+      containers:
+        - name: corndog-web-ui
+          image: corndog/corndog-web-ui:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80

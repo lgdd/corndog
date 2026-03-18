@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-menu
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-menu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-menu
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-menu
+    spec:
+      containers:
+        - name: corndog-menu
+          image: corndog/corndog-menu:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_SERVICE
+              value: corndog-menu
+            - name: DD_ENV
+              value: demo
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_APPSEC_ENABLED
+              value: "true"

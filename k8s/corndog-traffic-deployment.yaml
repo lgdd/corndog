@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: corndog-traffic-locustfile
+  namespace: corndog
+data:
+  locustfile.py: |
+    # Mounted from traffic/locustfile.py at build time.
+    # For K8s, embed or mount the locustfile via this ConfigMap.
+    # Replace this placeholder with the actual locustfile content
+    # or use a CI step to populate it.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-traffic
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-traffic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-traffic
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-traffic
+      annotations:
+        admission.datadoghq.com/enabled: "false"
+        ad.datadoghq.com/corndog-traffic.logs: '[{"source":"traffic","log_processing_rules":[{"type":"exclude_at_match","name":"exclude_all","pattern":".*"}]}]'
+    spec:
+      containers:
+        - name: corndog-traffic
+          image: locustio/locust
+          command:
+            - locust
+          args:
+            - "-f"
+            - /locust/locustfile.py
+            - "--host"
+            - "$(TRAFFIC_TARGET)"
+            - "--headless"
+            - "--users"
+            - "$(TRAFFIC_RATE)"
+            - "--spawn-rate"
+            - "$(TRAFFIC_RATE)"
+          env:
+            - name: TRAFFIC_TARGET
+              value: "http://corndog-web-ui:80"
+            - name: TRAFFIC_RATE
+              value: "10"
+            - name: TRAFFIC_LATENCY_MS
+              value: "0"
+          volumeMounts:
+            - name: locustfile
+              mountPath: /locust
+              readOnly: true
+      volumes:
+        - name: locustfile
+          configMap:
+            name: corndog-traffic-locustfile

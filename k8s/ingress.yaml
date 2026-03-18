@@ -1,0 +1,57 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: corndog-api
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-api
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/menu
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-menu
+                port:
+                  number: 8080
+          - path: /api/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-orders
+                port:
+                  number: 5000
+          - path: /api/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-admin
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: corndog-frontend
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-frontend
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-web-ui
+                port:
+                  number: 80

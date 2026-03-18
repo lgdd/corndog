@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corndog-admin
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corndog
+      component: corndog-admin
+  template:
+    metadata:
+      labels:
+        app: corndog
+        component: corndog-admin
+    spec:
+      containers:
+        - name: corndog-admin
+          image: corndog/corndog-admin:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                configMapKeyRef:
+                  name: corndog-config
+                  key: DOTNET_CONNECTION_STRING
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_SERVICE
+              value: corndog-admin
+            - name: DD_ENV
+              value: demo
+            - name: DD_VERSION
+              value: "1.0.0"
+            - name: DD_APPSEC_ENABLED
+              value: "true"
