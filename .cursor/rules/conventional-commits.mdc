@@ -1,0 +1,51 @@
+---
+description: Enforce Conventional Commits format for all git commit messages
+alwaysApply: true
+---
+
+# Conventional Commits
+
+All commit messages in this repo MUST follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+
+## Format
+
+```
+<type>(optional scope): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+## Allowed Types
+
+| Type       | When to use                                  |
+|------------|----------------------------------------------|
+| `feat`     | New feature or capability                    |
+| `fix`      | Bug fix                                      |
+| `docs`     | Documentation-only changes                   |
+| `style`    | Formatting, whitespace — no logic change     |
+| `refactor` | Code restructuring — no feature or fix       |
+| `chore`    | Maintenance (deps, configs, tooling)         |
+| `ci`       | CI/CD configuration changes                  |
+| `test`     | Adding or updating tests                     |
+| `perf`     | Performance improvements                     |
+| `revert`   | Reverts a previous commit                    |
+
+## Rules
+
+- Type and description are **required**; scope is optional.
+- Description must be lowercase, imperative mood, no trailing period.
+- Use `!` after the type/scope for breaking changes (e.g., `feat!: remove v1 API`).
+- Keep the subject line under 72 characters.
+- Separate body from subject with a blank line.
+
+## Examples
+
+```
+feat(skills): add traffic generator skill
+fix(install): correct symlink path on Linux
+docs: update README with setup instructions
+chore: remove unused template files
+refactor(rules)!: rename mdc frontmatter fields
+```
