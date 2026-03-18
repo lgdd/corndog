@@ -1,0 +1,63 @@
+<div class="cart-page">
+  <h1 class="page-title">🛒 Your Cart</h1>
+
+  <ng-container *ngIf="(cart$ | async) as items">
+    <div *ngIf="items.length === 0" class="empty-state">
+      <div class="emoji">🌭</div>
+      <h3>Your cart is empty</h3>
+      <p>Add some delicious corndogs from our menu!</p>
+      <a routerLink="/menu" class="btn btn-primary" style="margin-top: 16px">Browse Menu</a>
+    </div>
+
+    <div *ngIf="items.length > 0" class="cart-content">
+      <div class="cart-items card">
+        <div class="cart-item" *ngFor="let ci of items">
+          <span class="item-emoji">{{ ci.menuItem.emoji }}</span>
+          <div class="item-info">
+            <span class="item-name">{{ ci.menuItem.name }}</span>
+            <span class="item-price">{{ ci.menuItem.price | currency }} each</span>
+          </div>
+          <div class="item-controls">
+            <button class="qty-btn" (click)="updateQuantity(ci.menuItem.id, ci.quantity - 1)">−</button>
+            <span class="qty-value">{{ ci.quantity }}</span>
+            <button class="qty-btn" (click)="updateQuantity(ci.menuItem.id, ci.quantity + 1)">+</button>
+          </div>
+          <span class="item-total">{{ ci.menuItem.price * ci.quantity | currency }}</span>
+          <button class="remove-btn" (click)="removeItem(ci.menuItem.id)">✕</button>
+        </div>
+      </div>
+
+      <div class="checkout-section card">
+        <h3>Checkout</h3>
+        <div class="form-group">
+          <label for="customerName">Your Name</label>
+          <input
+            id="customerName"
+            type="text"
+            [(ngModel)]="customerName"
+            placeholder="Enter your name">
+        </div>
+        <div class="form-group">
+          <label for="specialInstructions">Special Instructions</label>
+          <textarea
+            id="specialInstructions"
+            [(ngModel)]="specialInstructions"
+            placeholder="Any special requests? Extra mustard, no ketchup, etc."
+            rows="3"></textarea>
+        </div>
+        <ng-container *ngIf="(cartTotal$ | async) as total">
+          <div class="cart-total">
+            <span>Total</span>
+            <span class="total-price">{{ total | currency }}</span>
+          </div>
+          <button
+            class="btn btn-primary place-order-btn"
+            [disabled]="!customerName.trim() || isSubmitting"
+            (click)="placeOrder(items, total)">
+            {{ isSubmitting ? 'Placing Order...' : '🌭 Place Order' }}
+          </button>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</div>

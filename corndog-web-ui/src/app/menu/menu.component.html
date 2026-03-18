@@ -1,0 +1,21 @@
+<div class="menu-page">
+  <h1 class="page-title">🌭 Our Menu</h1>
+  <p class="page-subtitle">Handcrafted corndogs, made with love</p>
+
+  <div class="menu-grid">
+    <div class="card menu-card" *ngFor="let item of menuItems">
+      <div class="menu-emoji">{{ item.emoji }}</div>
+      <h3 class="menu-name">{{ item.name }}</h3>
+      <p class="menu-desc">{{ item.description }}</p>
+      <div class="menu-footer">
+        <span class="menu-price">{{ item.price | currency }}</span>
+        <button
+          class="btn btn-primary btn-sm"
+          (click)="addToCart(item)"
+          [class.added]="addedItemId === item.id">
+          {{ addedItemId === item.id ? '✓ Added!' : 'Add to Cart' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

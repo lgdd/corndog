@@ -1,0 +1,58 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h1 class="page-title">🔧 Admin Panel</h1>
+    <span class="badge badge-warning">No Authentication</span>
+  </div>
+
+  <div class="export-section card">
+    <h3>Export Orders</h3>
+    <div class="export-controls">
+      <input
+        type="text"
+        [(ngModel)]="exportFilename"
+        placeholder="Filename (e.g., orders_export.csv)">
+      <button class="btn btn-secondary" (click)="exportOrders()">📤 Export</button>
+    </div>
+    <div class="export-message" *ngIf="exportMessage">{{ exportMessage }}</div>
+  </div>
+
+  <div *ngIf="loading" class="empty-state">
+    <div class="emoji">⏳</div>
+    <p>Loading orders...</p>
+  </div>
+
+  <div *ngIf="!loading && orders.length === 0" class="empty-state">
+    <div class="emoji">📭</div>
+    <h3>No orders yet</h3>
+  </div>
+
+  <div *ngIf="orders.length > 0" class="orders-table-wrapper card">
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Special Instructions</th>
+          <th>Total</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td class="id-cell">#{{ order.id }}</td>
+          <td>{{ order.customerName }}</td>
+          <td class="items-cell">
+            <span *ngFor="let item of order.items; let last = last">
+              {{ item.name }} (×{{ item.quantity }}){{ last ? '' : ', ' }}
+            </span>
+          </td>
+          <!-- TODO: fix before production — renders user input as raw HTML (XSS vulnerability) -->
+          <td [innerHTML]="order.specialInstructions | safeHtml"></td>
+          <td class="total-cell">{{ order.totalPrice | currency }}</td>
+          <td class="date-cell">{{ order.createdAt | date:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

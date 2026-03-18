@@ -1,0 +1,27 @@
+<header class="app-header">
+  <div class="container header-content">
+    <a routerLink="/menu" class="logo">
+      <span class="logo-emoji">🌭</span>
+      <span class="logo-text">Corndog</span>
+    </a>
+    <nav class="nav-links">
+      <a routerLink="/menu" routerLinkActive="active">Menu</a>
+      <a routerLink="/cart" routerLinkActive="active" class="cart-link">
+        Cart
+        <span class="cart-badge" *ngIf="(cartCount$ | async) as count">{{ count }}</span>
+      </a>
+      <a routerLink="/order-history" routerLinkActive="active">Orders</a>
+      <a routerLink="/admin" routerLinkActive="active" class="admin-link">Admin</a>
+    </nav>
+  </div>
+</header>
+<main class="app-main">
+  <div class="container">
+    <router-outlet></router-outlet>
+  </div>
+</main>
+<footer class="app-footer">
+  <div class="container">
+    <p>🌭 Corndog &copy; 2024 — The best corndogs on the internet</p>
+  </div>
+</footer>

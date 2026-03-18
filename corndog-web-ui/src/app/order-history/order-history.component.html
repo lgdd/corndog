@@ -1,0 +1,46 @@
+<div class="history-page">
+  <h1 class="page-title">📋 Order History</h1>
+  <p class="page-subtitle">Search for your past orders by name</p>
+
+  <div class="search-bar card">
+    <div class="search-input-group">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Enter your name to find orders..."
+        (keyup.enter)="search()">
+      <button class="btn btn-primary" (click)="search()" [disabled]="loading">
+        {{ loading ? 'Searching...' : '🔍 Search' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="searched && orders.length === 0" class="empty-state">
+    <div class="emoji">🔍</div>
+    <h3>No orders found</h3>
+    <p>Try a different name</p>
+  </div>
+
+  <div *ngIf="orders.length > 0" class="results">
+    <div class="card order-card" *ngFor="let order of orders">
+      <div class="order-header">
+        <span class="order-num">Order #{{ order.id }}</span>
+        <span class="order-date">{{ order.createdAt | date:'short' }}</span>
+      </div>
+      <div class="order-body">
+        <div class="order-meta">
+          <span><strong>Customer:</strong> {{ order.customerName }}</span>
+          <span class="order-total">{{ order.totalPrice | currency }}</span>
+        </div>
+        <div class="order-items-list">
+          <span *ngFor="let item of order.items; let last = last">
+            {{ item.name }} (×{{ item.quantity }}){{ last ? '' : ', ' }}
+          </span>
+        </div>
+        <div class="order-instructions" *ngIf="order.specialInstructions">
+          <strong>Instructions:</strong> {{ order.specialInstructions }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
