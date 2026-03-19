@@ -185,6 +185,34 @@ curl -X POST http://localhost:5001/api/admin/export \
   -d '{"filename": "orders.csv; cat /etc/passwd"}'
 ```
 
+## Unit Tests & Flaky Test Demo
+
+The `corndog-menu` Java service includes JUnit 5 unit tests — a mix of stable tests and **intentionally flaky tests** designed to demonstrate [Datadog Test Visibility](https://docs.datadoghq.com/tests/) flaky test detection.
+
+```bash
+cd corndog-menu && mvn test
+```
+
+### Stable tests (19)
+
+| Class | Tests | Coverage |
+|---|---|---|
+| `MenuServiceTest` | 6 | `getAllItems` / `getItem` via Mockito — returns, empty list, delegation, not-found exception |
+| `MenuControllerTest` | 6 | `@WebMvcTest` with MockMvc — status codes, JSON shape, prices, content type, exception propagation |
+| `MenuItemTest` | 7 | POJO constructors, getter/setter round-trips |
+
+### Flaky tests (5) — intentional for demo
+
+| Test | Pattern | Why it flakes |
+|---|---|---|
+| `getAllItems completes within acceptable latency` | Timing | Asserts < 500µs — GC pauses or CPU contention bust it |
+| `handles concurrent getItem calls without error` | Thread starvation | 50 threads must finish in 200ms — CI load can exceed that |
+| `menu items are returned in expected display order` | Non-deterministic ordering | Randomly swaps item order, then asserts strict sequence |
+| `GET /api/menu responds within 50ms SLA` | JIT warmup | First MockMvc request through Spring can exceed the 50ms threshold |
+| `two items with same data produce consistent hashCode` | Missing equals/hashCode | `MenuItem` uses `Object.hashCode()` — always different instances |
+
+> These flaky tests are the point of the demo — do not "fix" them unless explicitly asked.
+
 ## Project Structure
 
 ```
