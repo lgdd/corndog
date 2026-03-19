@@ -86,6 +86,34 @@ jobs:
       - name: Build Docker image
         run: docker build -t corndog/corndog-admin:latest ./corndog-admin
 
+  build-loyalty:
+    name: "corndog-loyalty (Node.js)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: corndog-loyalty
+      - name: Run tests
+        run: npx jest --forceExit --ci --reporters=default --reporters=jest-junit || true
+        working-directory: corndog-loyalty
+        env:
+          JEST_JUNIT_OUTPUT_DIR: test-results
+          JEST_JUNIT_OUTPUT_NAME: results.xml
+      - name: Upload test results to Datadog
+        if: always()
+        uses: datadog/junit-upload-github-action@v1
+        with:
+          api-key: ${{ secrets.DD_API_KEY }}
+          service: corndog-loyalty
+          env: ci
+          files: corndog-loyalty/test-results/*.xml
+      - name: Build Docker image
+        run: docker build -t corndog/corndog-loyalty:latest ./corndog-loyalty
+
   build-web-ui:
     name: "corndog-web-ui (Angular)"
     runs-on: ubuntu-latest
