@@ -39,6 +39,7 @@ health:           ## Hit every service health/root endpoint
 	@echo "corndog-menu  (8080):" && curl -sf http://localhost:8080/api/menu | head -c 120 && echo
 	@echo "corndog-orders(5000):" && curl -sf http://localhost:5000/api/orders/search?q=test | head -c 120 && echo
 	@echo "corndog-admin (5001):" && curl -sf http://localhost:5001/api/admin/orders | head -c 120 && echo
+	@echo "corndog-loyalty(3000):" && curl -sf http://localhost:3000/health | head -c 120 && echo
 	@echo "corndog-web-ui(4200):" && curl -sf -o /dev/null -w "HTTP %{http_code}" http://localhost:4200 && echo
 
 smoke:            ## Run quick smoke tests (golden path + vuln triggers)
@@ -49,6 +50,13 @@ smoke:            ## Run quick smoke tests (golden path + vuln triggers)
 	  -H "Content-Type: application/json" \
 	  -d '{"customerName":"Smoke Test","items":[{"menu_item_id":1,"quantity":2}],"specialInstructions":"plain","totalPrice":9.98}' \
 	  | python3 -m json.tool
+	@echo "\n=== Earn loyalty points ==="
+	curl -s -X POST http://localhost:3000/api/loyalty/earn \
+	  -H "Content-Type: application/json" \
+	  -d '{"customerName":"Smoke Test","orderTotal":9.98}' \
+	  | python3 -m json.tool
+	@echo "\n=== Check loyalty points ==="
+	curl -s "http://localhost:3000/api/loyalty/points?customer=Smoke+Test" | python3 -m json.tool
 	@echo "\n=== SQLi probe ==="
 	curl -s "http://localhost:5000/api/orders/search?q=' OR 1=1--" | head -c 200
 	@echo "\n=== Cmd injection probe ==="

