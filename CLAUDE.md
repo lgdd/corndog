@@ -47,6 +47,9 @@ cd corndog-orders && pip install -r requirements.txt && pytest
 # corndog-admin (.NET 6)
 cd corndog-admin && dotnet build && dotnet test
 
+# corndog-loyalty (Node.js 18, Express 4.18.2)
+cd corndog-loyalty && npm ci && npm test
+
 # corndog-web-ui (Angular 15, Node 18)
 cd corndog-web-ui && npm ci && npx ng test --watch=false --browsers=ChromeHeadless
 cd corndog-web-ui && npx ng build --configuration production
@@ -57,15 +60,15 @@ cd corndog-web-ui && npx ng build --configuration production
 
 ## Architecture
 
-Four backend services share a single PostgreSQL database (`corndog`), fronted by an Angular SPA served through Nginx:
+Five backend services share a single PostgreSQL database (`corndog`), fronted by an Angular SPA served through Nginx:
 
-- **corndog-web-ui** (Angular 15 / Nginx, :4200→80) — SPA frontend. Nginx reverse-proxies `/api/menu`, `/api/orders`, `/api/admin` to the respective backends.
+- **corndog-web-ui** (Angular 15 / Nginx, :4200→80) — SPA frontend. Nginx reverse-proxies `/api/menu`, `/api/orders`, `/api/admin`, `/api/loyalty` to the respective backends.
 - **corndog-menu** (Spring Boot / Java 17, :8080) — Menu CRUD. JPA/Hibernate with `menu_items` table. Entry point: `CornDogApplication.java`, controller at `controller/MenuController.java`.
 - **corndog-orders** (Flask / Python 3.11, :5000) — Order placement, search, receipts. SQLAlchemy with `orders` table. Flask app factory in `app/main.py`, routes in `app/routes/orders.py`. Run via `ddtrace-run gunicorn`.
 - **corndog-admin** (.NET 6 / ASP.NET Core, :5001→80) — Admin order list and export. EF Core with Npgsql. Controller at `src/Controllers/AdminController.cs`, service at `src/Services/OrderService.cs`.
-- **corndog-db** (PostgreSQL 14, :5432) — Shared database. Schema in `db/init.sql`. Tables: `menu_items`, `orders` (JSONB items column). Datadog DBM enabled via `pg_stat_statements`.
+- **corndog-loyalty** (Express / Node.js 18, :3000) — Loyalty points service. Customers earn/redeem points per order. Uses `AsyncLocalStorage` for request-scoped context. Entry point: `server.js`, routes in `routes/loyalty.js`, DB queries in `services/points-service.js`. Runs on a vulnerable Node 18 runtime to demo CVE-2025-59466. `restart: on-failure` so it recovers from DoS crashes.
+- **corndog-db** (PostgreSQL 14, :5432) — Shared database. Schema in `db/init.sql`. Tables: `menu_items`, `orders` (JSONB items column), `loyalty_points`. Datadog DBM enabled via `pg_stat_statements`.
 - **corndog-traffic** (Locust, headless) — Continuous traffic generator. Runs golden-path requests and security attack scenarios (SQLi, XSS, command injection) through Nginx to produce realistic distributed traces and ASM signals. Config in `traffic/locustfile.py`. Tunable via `TRAFFIC_RATE` (default 10 users), `TRAFFIC_DURATION` (default unlimited), `TRAFFIC_LATENCY_MS`. Includes a `BurstUser` that creates periodic menu request spikes. Excluded from Datadog telemetry via log exclusion label.
-- **redis** (Redis 7, :6379) — Cache layer.
 - **datadog-agent** — Collects traces (:8126), logs, metrics, and runtime security events.
 
 All backend services have CORS wide-open, JSON structured logging, and Datadog tracer integration. Each service has its own Dockerfile with multi-stage builds.
@@ -80,6 +83,7 @@ The vulnerabilities are the point of the demo — do not "fix" them unless expli
 4. **Command Injection** in `corndog-admin/src/Controllers/AdminController.cs` — unsanitized `filename` in export
 5. **Broken Auth** in `corndog-admin` — no authentication on admin endpoints
 6. **Vulnerable Dependencies** — intentionally pinned to versions with known CVEs
+7. **DoS via Nested JSON (CVE-2025-59466)** in `corndog-loyalty/routes/loyalty.js` — recursive `countDepth()` on deeply nested JSON triggers stack overflow; with `AsyncLocalStorage` active, the `try/catch` is bypassed and the process crashes
 
 ## Cursor Rules
 

@@ -7,7 +7,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 | Product | Coverage |
 |---|---|
 | **Infrastructure Monitoring** | Host/container metrics, live processes via Agent |
-| **APM (Distributed Tracing)** | Traces across Java, Python, .NET services |
+| **APM (Distributed Tracing)** | Traces across Java, Python, .NET, Node.js services |
 | **Log Management** | JSON-formatted logs correlated to traces |
 | **Database Monitoring** | Query-level Postgres insights via `pg_stat_statements` |
 | **App & API Protection** | Runtime threat detection (SQLi, command injection, XSS) |
@@ -18,36 +18,40 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 ## Architecture
 
 ```
-                         ┌─────────────────────────────┐
-                         │     corndog-web-ui           │
-                         │     Angular 15 (Nginx)       │
-                         │     :4200                    │
-                         └──────┬──────┬──────┬────────┘
-                                │      │      │
-                    /api/menu   │      │      │  /api/admin
-                                │      │      │
-                  ┌─────────────┘      │      └─────────────┐
-                  ▼                    │                     ▼
-          ┌──────────────┐    /api/orders    ┌──────────────────┐
-          │ corndog-menu │             │     │  corndog-admin   │
-          │ Spring Boot  │             │     │  .NET 6          │
-          │ :8080        │             ▼     │  :80             │
-          └──────┬───────┘    ┌──────────────┐└──────┬──────────┘
-                 │            │corndog-orders│       │
-                 │            │ Flask 2.2.2  │       │
-                 │            │ :5000        │       │
-                 │            └──────┬───────┘       │
-                 │                   │               │
-                 └───────────┬───────┘───────────────┘
-                             ▼
-      ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐
-      │  corndog-db  │   │    redis     │   │  datadog-agent   │
-      │ PostgreSQL 14│   │   Redis 7    │   │  Agent (latest)  │
-      │  :5432       │   │  :6379       │   │  :8126           │
-      └──────────────┘   └──────────────┘   └──────────────────┘
+                              +---------------+
+                              |    traffic    |
+                              |    Locust     |
+                              +-------+-------+
+                                      |
+                                      | :4200
+                                      |
+                              +-------+-------+
+                              |    web-ui     |
+                              |     Nginx     |
+                              +-------+-------+
+                                      |
+       +-------------------+---------+---------+-------------------+
+       |                   |                   |                   |
+       | :8080/api/menu    | :5000/api/orders  | :3000/api/loyalty | :5001/api/admin
+       |                   |                   |                   |
++------+------+     +------+------+     +------+------+     +------+------+
+|    menu     |     |   orders    |     |   loyalty   |     |    admin    |
+| Spring Boot |     |    Flask    |     |   Express   |     |   ASP.NET   |
++------+------+     +------+------+     +------+------+     +------+------+
+       |                   |                   |                   |
+       +---------+---------+-------------------+---------+---------+
+                 |                                       |
+                 | :5432                                 | :8126
+                 |                                       |
+          +------+------+                         +------+------+
+          |     db      |                         |  dd-agent   |
+          | PostgreSQL  |                         |   Datadog   |
+          +------+------+                         +------+------+
+                 |                                       |
+                 +----------------- DBM -----------------+
 ```
 
-Each backend owns a distinct domain — menu, orders, or admin — and all share a single PostgreSQL database.
+Each backend owns a distinct domain — menu, orders, admin, or loyalty — and all share a single PostgreSQL database.
 
 ## Services
 
@@ -57,8 +61,8 @@ Each backend owns a distinct domain — menu, orders, or admin — and all share
 | corndog-menu | Java 17, Spring Boot 2.6.3 | Menu items | 8080 | `corndog-menu` |
 | corndog-orders | Python 3.11, Flask 2.2.2 | Orders, search, receipts | 5000 | `corndog-orders` |
 | corndog-admin | .NET 6, ASP.NET Core | Admin panel, exports | 5001 (→80) | `corndog-admin` |
+| corndog-loyalty | Node.js 18, Express 4.18.2 | Loyalty points | 3000 | `corndog-loyalty` |
 | corndog-db | PostgreSQL 14 | Database (DBM enabled) | 5432 | `corndog-db` |
-| redis | Redis 7 | Cache | 6379 | `redis` |
 | corndog-traffic | Locust (headless) | Synthetic traffic generator | — | — (excluded) |
 | datadog-agent | Datadog Agent | Telemetry collection | 8126 | — |
 
@@ -74,6 +78,10 @@ Each backend owns a distinct domain — menu, orders, or admin — and all share
 | `GET` | `/api/orders/{id}/receipt` | corndog-orders | Generate receipt |
 | `GET` | `/api/admin/orders` | corndog-admin | List all orders |
 | `POST` | `/api/admin/export` | corndog-admin | Export orders to file |
+| `GET` | `/api/loyalty/points?customer=` | corndog-loyalty | Check loyalty points |
+| `POST` | `/api/loyalty/earn` | corndog-loyalty | Earn points for an order |
+| `POST` | `/api/loyalty/redeem` | corndog-loyalty | Redeem loyalty points |
+| `POST` | `/api/loyalty/validate-config` | corndog-loyalty | Validate config (vulnerable) |
 
 ## Intentional Vulnerabilities
 
@@ -87,6 +95,7 @@ Each backend owns a distinct domain — menu, orders, or admin — and all share
 | 4 | Command Injection | corndog-admin | `POST /api/admin/export` | Unsanitized `filename` in shell command |
 | 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | No authentication check |
 | 6 | Vulnerable Deps | all backends | — | Known CVEs in pinned dependency versions |
+| 7 | DoS via Nested JSON (CVE-2025-59466) | corndog-loyalty | `POST /api/loyalty/validate-config` | Recursive depth counting + `AsyncLocalStorage` makes stack overflow unrecoverable |
 
 ## Demo Scenarios — Failure Paths
 
@@ -97,6 +106,7 @@ Each backend owns a distinct domain — menu, orders, or admin — and all share
 | `POST /api/admin/export` with `"filename": "x; cat /etc/passwd"` | Command injection succeeds | ASM threat event + IAST tainted data flow |
 | Place order with `<img src=x onerror=alert('XSS')>` in special instructions | Stored XSS renders on confirmation/admin views | IAST XSS vulnerability finding |
 | Any request to backend services | Vulnerable dependencies detected | SCA findings in Vulnerability Management (Text4Shell, H2, JWT CVEs) |
+| `POST /api/loyalty/validate-config` with ~15k-deep nested JSON | Process crashes (stack overflow + `async_hooks`) | Security Research Feed shows "Impacted" for CVE-2025-59466; service restarts via `restart: on-failure` |
 
 ## Traffic Generator
 
@@ -113,12 +123,15 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `search_orders` | 4 | `GET /api/orders/search` | Safe keyword search |
 | `view_single_item` | 3 | `GET /api/menu/{id}` | Single menu item view |
 | `get_receipt` | 3 | `GET /api/orders/{id}/receipt` | Safe receipt generation |
+| `earn_loyalty_points` | 4 | `POST /api/loyalty/earn` | Earn loyalty points for order |
+| `check_loyalty_points` | 3 | `GET /api/loyalty/points` | Check customer loyalty points |
 | `admin_list_orders` | 2 | `GET /api/admin/orders` | Broken-auth golden path |
 | `scenario_sqli` | 2 | `GET /api/orders/search` | SQL injection (`' OR 1=1--`) |
 | `scenario_xss` | 2 | `POST /api/orders` | Stored XSS in special instructions |
 | `scenario_sqli_union` | 1 | `GET /api/orders/search` | UNION-based SQL injection |
 | `scenario_cmd_injection_receipt` | 1 | `GET /api/orders/{id}/receipt` | Command injection via `format` param |
 | `scenario_cmd_injection_export` | 1 | `POST /api/admin/export` | Command injection via `filename` |
+| `scenario_dos_nested_json` | 1 | `POST /api/loyalty/validate-config` | DoS via deeply nested JSON (CVE-2025-59466) |
 | `burst_or_idle` | — | `GET /api/menu` | Periodic 30s burst spike every ~5 min |
 
 ### Configuration
@@ -185,6 +198,20 @@ curl -X POST http://localhost:5001/api/admin/export \
   -d '{"filename": "orders.csv; cat /etc/passwd"}'
 ```
 
+### DoS via Nested JSON — CVE-2025-59466 (corndog-loyalty)
+```bash
+# Generate a ~15k-deep nested JSON payload and POST it
+python3 -c "
+import json
+obj = {'value': 'leaf'}
+for _ in range(15000):
+    obj = {'rules': obj}
+print(json.dumps(obj))
+" | curl -X POST http://localhost:3000/api/loyalty/validate-config \
+  -H "Content-Type: application/json" \
+  -d @-
+```
+
 ## Unit Tests & Flaky Test Demo
 
 The `corndog-menu` Java service includes JUnit 5 unit tests — a mix of stable tests and **intentionally flaky tests** designed to demonstrate [Datadog Test Visibility](https://docs.datadoghq.com/tests/) flaky test detection.
@@ -224,6 +251,7 @@ corndog/
 ├── corndog-menu/           → Java 17, Spring Boot 2.6.3 (dd-java-agent)
 ├── corndog-orders/         → Python 3.11, Flask 2.2.2 (ddtrace)
 ├── corndog-admin/          → .NET 6, ASP.NET Core (dd-trace-dotnet)
+├── corndog-loyalty/        → Node.js 18, Express 4.18.2 (dd-trace)
 ├── traffic/                → Locust traffic generator (excluded from DD)
 ├── k8s/                    → Kubernetes manifests
 └── .github/workflows/      → CI with Datadog CI Visibility
