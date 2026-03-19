@@ -53,3 +53,11 @@ INSERT INTO menu_items (id, name, description, price, emoji) VALUES
   (3, 'Cheese-Stuffed Dog',  'Oozing cheddar inside a crispy cornbread shell',      6.49, '🧀'),
   (4, 'Vegan Dog',           'Plant-based sausage, same great cornbread coating',   5.49, '🌱')
 ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS loyalty_points (
+  id SERIAL PRIMARY KEY,
+  customer_name VARCHAR(200) NOT NULL UNIQUE,
+  points INTEGER NOT NULL DEFAULT 0,
+  tier VARCHAR(20) NOT NULL DEFAULT 'bronze',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
