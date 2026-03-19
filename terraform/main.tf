@@ -52,7 +52,7 @@ data "aws_subnets" "default" {
 # ---------- Security Group ----------
 resource "aws_security_group" "corndog" {
   name_prefix = "corndog-"
-  description = "Corndog demo — HTTP + SSH"
+  description = "Corndog demo - HTTP + SSH"
   vpc_id      = data.aws_vpc.default.id
 
   # App UI
@@ -66,7 +66,7 @@ resource "aws_security_group" "corndog" {
 
   # SSH (only when a key pair is provided)
   dynamic "ingress" {
-    for_each = var.key_name != "" ? [1] : []
+    for_each = var.ssh_key_name != "" ? [1] : []
     content {
       description = "SSH"
       from_port   = 22
@@ -114,7 +114,7 @@ resource "aws_iam_instance_profile" "corndog" {
 resource "aws_instance" "corndog" {
   ami                    = data.aws_ami.al2023.id
   instance_type          = var.instance_type
-  key_name               = var.key_name != "" ? var.key_name : null
+  key_name               = var.ssh_key_name != "" ? var.ssh_key_name : null
   vpc_security_group_ids = [aws_security_group.corndog.id]
   subnet_id              = data.aws_subnets.default.ids[0]
   iam_instance_profile   = aws_iam_instance_profile.corndog.name
@@ -125,11 +125,12 @@ resource "aws_instance" "corndog" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    dd_api_key  = var.dd_api_key
-    dd_site     = var.dd_site
-    dd_env      = var.dd_env
-    repo_url    = var.repo_url
-    repo_branch = var.repo_branch
+    dd_api_key   = var.dd_api_key
+    dd_site      = var.dd_site
+    dd_env       = var.dd_env
+    github_token = var.github_token
+    repo_url     = var.repo_url
+    repo_branch  = var.repo_branch
   }))
 
   tags = {

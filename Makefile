@@ -1,3 +1,7 @@
+SHELL := /bin/bash
+-include .env
+export
+
 .PHONY: build up down restart logs ps clean health smoke traffic-up traffic-down \
        tf-init tf-plan tf-apply tf-destroy tf-output
 
@@ -75,10 +79,14 @@ tf-plan:          ## Preview infrastructure changes
 	terraform -chdir=$(TF_DIR) plan
 
 tf-apply:         ## Deploy the stack to EC2
-	terraform -chdir=$(TF_DIR) apply
+	terraform -chdir=$(TF_DIR) apply -auto-approve \
+	  -var ssh_key_name=$(SSH_KEY_NAME) \
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),)
 
 tf-destroy:       ## Tear down the EC2 stack
-	terraform -chdir=$(TF_DIR) destroy
+	terraform -chdir=$(TF_DIR) destroy -auto-approve \
+	  -var ssh_key_name=$(SSH_KEY_NAME) \
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),)
 
 tf-output:        ## Show Terraform outputs (IP, URL, SSM command)
 	terraform -chdir=$(TF_DIR) output

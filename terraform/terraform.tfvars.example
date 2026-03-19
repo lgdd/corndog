@@ -7,8 +7,12 @@ aws_region    = "eu-north-1"
 instance_type = "t3.xlarge"
 
 # SSH key pair name (optional — SSM access works without it)
-# key_name = "my-keypair"
+# ssh_key_name = "my-keypair"
+
+# GitHub token for private repo access (optional — leave empty for public repos)
+# github_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Git clone URL for this repo
-repo_url    = ""
+repo_url    = "https://github.com/lgdd/corndog.git"
 repo_branch = "main"
+

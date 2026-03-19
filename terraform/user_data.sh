@@ -7,19 +7,30 @@ dnf install -y docker git
 systemctl enable --now docker
 usermod -aG docker ec2-user
 
-# Install Docker Compose plugin
+# Install Docker Compose & BuildX plugins
 mkdir -p /usr/local/lib/docker/cli-plugins
 curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
   -o /usr/local/lib/docker/cli-plugins/docker-compose
 chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
+BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+curl -SL "https://github.com/docker/buildx/releases/download/$${BUILDX_VERSION}/buildx-$${BUILDX_VERSION}.linux-amd64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-buildx
+chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+
 echo ">>> Cloning repo"
 REPO_URL="${repo_url}"
 REPO_BRANCH="${repo_branch}"
+GITHUB_TOKEN="${github_token}"
 
 if [ -z "$REPO_URL" ]; then
   echo "ERROR: repo_url variable is empty — set it to the git clone URL of this project."
   exit 1
+fi
+
+# If a GitHub token is provided, inject it into the HTTPS URL for private repo access
+if [ -n "$GITHUB_TOKEN" ]; then
+  REPO_URL=$(echo "$REPO_URL" | sed "s|https://github.com|https://$GITHUB_TOKEN@github.com|")
 fi
 
 git clone --branch "$REPO_BRANCH" --depth 1 "$REPO_URL" /opt/corndog

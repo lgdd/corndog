@@ -28,16 +28,23 @@ variable "instance_type" {
   default     = "t3.xlarge"
 }
 
-variable "key_name" {
+variable "ssh_key_name" {
   description = "Name of an existing EC2 key pair for SSH access (leave empty to disable SSH)"
   type        = string
+  default     = ""
+}
+
+variable "github_token" {
+  description = "GitHub personal access token for cloning private repos (leave empty for public repos)"
+  type        = string
+  sensitive   = true
   default     = ""
 }
 
 variable "repo_url" {
   description = "Git repo URL to clone on the instance"
   type        = string
-  default     = ""
+  default     = "https://github.com/lgdd/corndog.git"
 }
 
 variable "repo_branch" {
