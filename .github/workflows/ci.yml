@@ -27,8 +27,6 @@ jobs:
           service: corndog-menu
           env: ci
           files: corndog-menu/**/target/surefire-reports/*.xml
-      # - name: SAST/SCA scan
-      #   run: datadog-ci sbom upload --service corndog-menu corndog-menu/
       - name: Build Docker image
         run: docker build -t corndog/corndog-menu:latest ./corndog-menu
 
@@ -54,8 +52,6 @@ jobs:
           service: corndog-orders
           env: ci
           files: corndog-orders/test-results/*.xml
-      # - name: SAST/SCA scan
-      #   run: datadog-ci sbom upload --service corndog-orders corndog-orders/
       - name: Build Docker image
         run: docker build -t corndog/corndog-orders:latest ./corndog-orders
 
@@ -81,8 +77,6 @@ jobs:
           service: corndog-admin
           env: ci
           files: corndog-admin/test-results/**/*.trx
-      # - name: SAST/SCA scan
-      #   run: datadog-ci sbom upload --service corndog-admin corndog-admin/
       - name: Build Docker image
         run: docker build -t corndog/corndog-admin:latest ./corndog-admin
 
@@ -139,7 +133,49 @@ jobs:
           service: corndog-web-ui
           env: ci
           files: corndog-web-ui/test-results/**/*.xml
-      # - name: SAST/SCA scan
-      #   run: datadog-ci sbom upload --service corndog-web-ui corndog-web-ui/
       - name: Build Docker image
         run: docker build -t corndog/corndog-web-ui:latest ./corndog-web-ui
+
+  static-analysis:
+    name: "Datadog Static Analysis (SAST)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Datadog Static Analyzer
+        id: datadog-static-analysis
+        uses: DataDog/datadog-static-analyzer-github-action@v3
+        with:
+          dd_api_key: ${{ secrets.DD_API_KEY }}
+          dd_app_key: ${{ secrets.DD_APP_KEY }}
+          dd_site: ${{ vars.DD_SITE || 'datadoghq.com' }}
+          cpu_count: 2
+          enable_performance_statistics: false
+
+  software-composition-analysis:
+    name: "Datadog SCA"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Datadog SCA
+        id: datadog-sca
+        uses: DataDog/datadog-sca-github-action@main
+        with:
+          dd_api_key: ${{ secrets.DD_API_KEY }}
+          dd_app_key: ${{ secrets.DD_APP_KEY }}
+          dd_site: ${{ vars.DD_SITE || 'datadoghq.com' }}
+
+  secret-scanning:
+    name: "Datadog Secret Scanning"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Datadog Secret Scanning
+        id: datadog-secrets
+        uses: DataDog/datadog-static-analyzer-github-action@v3
+        with:
+          dd_api_key: ${{ secrets.DD_API_KEY }}
+          dd_app_key: ${{ secrets.DD_APP_KEY }}
+          dd_site: ${{ vars.DD_SITE || 'datadoghq.com' }}
+          cpu_count: 2
+          static_analysis_enabled: false
+          secrets_enabled: true
