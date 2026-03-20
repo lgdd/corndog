@@ -14,6 +14,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 | **Code Security — IAST** | Taint-tracking vulnerability detection at runtime |
 | **Code Security — SCA** | Dependency vulnerability scanning (CVEs in pinned libs) |
 | **Workload Protection** | Runtime security (CWS) on containers |
+| **Cloud SIEM** | Keycloak auth events via syslog — login, failed login, brute force detection |
 
 ## Architecture
 
@@ -63,6 +64,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | corndog-admin | .NET 6, ASP.NET Core | Admin panel, exports | 5001 (→80) | `corndog-admin` |
 | corndog-loyalty | Node.js 18, Express 4.18.2 | Loyalty points | 3000 | `corndog-loyalty` |
 | corndog-db | PostgreSQL 14 | Database (DBM enabled) | 5432 | `corndog-db` |
+| corndog-auth | Keycloak 26.2.3 | SSO / OIDC identity provider | 8180 (→8080) | `corndog-auth` |
 | corndog-traffic | Locust (headless) | Synthetic traffic generator | — | — (excluded) |
 | datadog-agent | Datadog Agent | Telemetry collection | 8126 | — |
 
@@ -82,6 +84,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | `POST` | `/api/loyalty/earn` | corndog-loyalty | Earn points for an order |
 | `POST` | `/api/loyalty/redeem` | corndog-loyalty | Redeem loyalty points |
 | `POST` | `/api/loyalty/validate-config` | corndog-loyalty | Validate config (vulnerable) |
+| `POST` | `/auth/realms/corndog/protocol/openid-connect/token` | corndog-auth | OIDC token endpoint |
 
 ## Intentional Vulnerabilities
 
@@ -93,7 +96,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | 2 | XSS (Stored) | corndog-web-ui | Confirmation & admin views | `[innerHTML]` with sanitizer bypass pipe |
 | 3 | Command Injection | corndog-orders | `GET /api/orders/{id}/receipt` | Unsanitized `format` param in shell command |
 | 4 | Command Injection | corndog-admin | `POST /api/admin/export` | Unsanitized `filename` in shell command |
-| 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | No authentication check |
+| 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | Frontend has Keycloak guard but backend API does not validate tokens |
 | 6 | Vulnerable Deps | all backends | — | Known CVEs in pinned dependency versions |
 | 7 | DoS via Nested JSON (CVE-2025-59466) | corndog-loyalty | `POST /api/loyalty/validate-config` | Recursive depth counting + `AsyncLocalStorage` makes stack overflow unrecoverable |
 
@@ -107,6 +110,9 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | Place order with `<img src=x onerror=alert('XSS')>` in special instructions | Stored XSS renders on confirmation/admin views | IAST XSS vulnerability finding |
 | Any request to backend services | Vulnerable dependencies detected | SCA findings in Vulnerability Management (Text4Shell, H2, JWT CVEs) |
 | `POST /api/loyalty/validate-config` with ~15k-deep nested JSON | Process crashes (stack overflow + `async_hooks`) | Security Research Feed shows "Impacted" for CVE-2025-59466; service restarts via `restart: on-failure` |
+| Burst of failed Keycloak logins from single IP | `LOGIN_ERROR` events in syslog | Cloud SIEM brute-force detection rule fires |
+| Successful logins from geographically distant IPs | `LOGIN` events with different source IPs | Cloud SIEM impossible-travel detection |
+| Failed logins across many usernames from few IPs | `LOGIN_ERROR` events with varied `usr.id` | Cloud SIEM credential-stuffing detection |
 
 ## Traffic Generator
 
@@ -132,6 +138,9 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `scenario_cmd_injection_receipt` | 1 | `GET /api/orders/{id}/receipt` | Command injection via `format` param |
 | `scenario_cmd_injection_export` | 1 | `POST /api/admin/export` | Command injection via `filename` |
 | `scenario_dos_nested_json` | 1 | `POST /api/loyalty/validate-config` | DoS via deeply nested JSON (CVE-2025-59466) |
+| `keycloak_login` | 2 | `POST /auth/.../token` | Successful OIDC login (SIEM signal) |
+| `keycloak_failed_login` | 2 | `POST /auth/.../token` | Failed login with wrong password (SIEM signal) |
+| `keycloak_brute_force` | 1 | `POST /auth/.../token` | Burst of 5-10 failed logins (SIEM signal) |
 | `burst_or_idle` | — | `GET /api/menu` | Periodic 30s burst spike every ~5 min |
 
 ### Configuration
@@ -171,7 +180,18 @@ docker compose up --build
 
 # Access the app
 open http://localhost:4200
+
+# Keycloak admin console (optional)
+open http://localhost:8180/auth/admin   # keycloak / keycloak
 ```
+
+### Keycloak SSO Credentials
+
+| User | Password | Role | Purpose |
+|---|---|---|---|
+| `admin` | `admin123` | `admin` | Admin panel access |
+| `user` | `user123` | `user` | Regular customer |
+| `keycloak` | `keycloak` | — | Keycloak admin console |
 
 ## Testing Vulnerabilities
 
@@ -252,6 +272,7 @@ corndog/
 ├── corndog-orders/         → Python 3.11, Flask 2.2.2 (ddtrace)
 ├── corndog-admin/          → .NET 6, ASP.NET Core (dd-trace-dotnet)
 ├── corndog-loyalty/        → Node.js 18, Express 4.18.2 (dd-trace)
+├── corndog-auth/            → Keycloak realm config (corndog-realm.json)
 ├── traffic/                → Locust traffic generator (excluded from DD)
 ├── k8s/                    → Kubernetes manifests
 └── .github/workflows/      → CI with Datadog CI Visibility
