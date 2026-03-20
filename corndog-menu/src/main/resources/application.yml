@@ -19,3 +19,8 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: SG.xV3kM8nQ1rT5wJ7bF2dY4s.pL9hA6cE0gK3iN8mX1vB5yW7tD4fR2jU
