@@ -1,0 +1,121 @@
+{
+  "realm": "corndog",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 600,
+  "ssoSessionMaxLifespan": 1800,
+  "eventsEnabled": true,
+  "eventsListeners": ["jboss-logging"],
+  "enabledEventTypes": [
+    "LOGIN",
+    "LOGIN_ERROR",
+    "LOGOUT",
+    "LOGOUT_ERROR",
+    "REGISTER",
+    "REGISTER_ERROR",
+    "CODE_TO_TOKEN",
+    "CODE_TO_TOKEN_ERROR",
+    "CLIENT_LOGIN",
+    "CLIENT_LOGIN_ERROR",
+    "REFRESH_TOKEN",
+    "REFRESH_TOKEN_ERROR",
+    "VALIDATE_ACCESS_TOKEN",
+    "INTROSPECT_TOKEN",
+    "USER_INFO_REQUEST",
+    "IDENTITY_PROVIDER_LOGIN",
+    "IDENTITY_PROVIDER_FIRST_LOGIN",
+    "IMPERSONATE",
+    "GRANT_CONSENT",
+    "UPDATE_CONSENT",
+    "REVOKE_GRANT",
+    "SEND_VERIFY_EMAIL",
+    "VERIFY_EMAIL",
+    "UPDATE_EMAIL",
+    "UPDATE_PROFILE",
+    "UPDATE_PASSWORD",
+    "UPDATE_TOTP",
+    "SEND_RESET_PASSWORD",
+    "RESET_PASSWORD"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Corndog shop administrator"
+      },
+      {
+        "name": "user",
+        "description": "Regular corndog customer"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "corndog-web",
+      "name": "Corndog Web UI",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "http://localhost:4200",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "+"
+      ],
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@corndog.demo",
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "user",
+      "enabled": true,
+      "email": "user@corndog.demo",
+      "firstName": "Regular",
+      "lastName": "Customer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
+    }
+  ]
+}

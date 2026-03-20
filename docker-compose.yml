@@ -1,5 +1,6 @@
 services:
   datadog-agent:
+    container_name: datadog-agent
     image: gcr.io/datadoghq/agent:latest
     environment:
       - DD_API_KEY=${DD_API_KEY}
@@ -9,6 +10,7 @@ services:
       - DD_APM_NON_LOCAL_TRAFFIC=true
       - DD_LOGS_ENABLED=true
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_LOGS_CONFIG_DOCKER_CONTAINER_USE_FILE=false
       - DD_PROCESS_AGENT_PROCESS_COLLECTION_ENABLED=true
       - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
       - DD_RUNTIME_SECURITY_CONFIG_ENABLED=true
@@ -28,6 +30,7 @@ services:
       - "8126:8126"
 
   corndog-db:
+    container_name: corndog-db
     image: postgres:14
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
@@ -62,6 +65,7 @@ services:
       retries: 10
 
   corndog-menu:
+    container_name: corndog-menu
     build: ./corndog-menu
     ports:
       - "8080:8080"
@@ -89,6 +93,7 @@ services:
         condition: service_healthy
 
   corndog-orders:
+    container_name: corndog-orders
     build: ./corndog-orders
     ports:
       - "5000:5000"
@@ -114,6 +119,7 @@ services:
         condition: service_healthy
 
   corndog-admin:
+    container_name: corndog-admin
     build: ./corndog-admin
     ports:
       - "5001:80"
@@ -139,6 +145,7 @@ services:
         condition: service_healthy
 
   corndog-loyalty:
+    container_name: corndog-loyalty
     build: ./corndog-loyalty
     ports:
       - "3000:3000"
@@ -164,7 +171,46 @@ services:
         condition: service_healthy
     restart: on-failure
 
+  corndog-auth:
+    container_name: corndog-auth
+    image: quay.io/keycloak/keycloak:26.2.3
+    command: >-
+      start-dev --import-realm --health-enabled=true
+      --log=console
+      --log-console-output=json
+    environment:
+      KC_HTTP_RELATIVE_PATH: /auth
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: keycloak
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: INFO
+      KC_LOG_CONSOLE_JSON_FORMAT: ecs
+      KC_TELEMETRY_SERVICE_NAME: corndog-auth
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./corndog-auth/corndog-realm.json:/opt/keycloak/data/import/corndog-realm.json:ro
+    labels:
+      com.datadoghq.tags.env: "${DD_ENV:-corndog-260318}"
+      com.datadoghq.tags.service: "corndog-auth"
+      com.datadoghq.tags.version: "${DD_VERSION:-1.0.0}"
+      com.datadoghq.ad.logs: '[{"source":"keycloak","service":"corndog-auth","type":"docker","auto_multi_line_detection":true}]'
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /auth/health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200 OK'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    depends_on:
+      datadog-agent:
+        condition: service_healthy
+
   corndog-web-ui:
+    container_name: corndog-web-ui
     build: ./corndog-web-ui
     ports:
       - "4200:80"
@@ -177,8 +223,10 @@ services:
       - corndog-orders
       - corndog-admin
       - corndog-loyalty
+      - corndog-auth
 
   corndog-traffic:
+    container_name: corndog-traffic
     image: locustio/locust
     command: >-
       -f /locust/locustfile.py
@@ -194,7 +242,7 @@ services:
     depends_on:
       - corndog-web-ui
     labels:
-      com.datadoghq.ad.logs: '[{"source":"traffic","log_processing_rules":[{"type":"exclude_at_match","name":"exclude_all","pattern":".*"}]}]'
+      com.datadoghq.ad.logs: '[{"source":"locust","log_processing_rules":[{"type":"exclude_at_match","name":"exclude_all","pattern":".*"}]}]'
     restart: unless-stopped
 
 volumes:

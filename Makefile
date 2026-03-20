@@ -41,6 +41,7 @@ health:           ## Hit every service health/root endpoint
 	@echo "corndog-admin (5001):" && curl -sf http://localhost:5001/api/admin/orders | head -c 120 && echo
 	@echo "corndog-loyalty(3000):" && curl -sf http://localhost:3000/health | head -c 120 && echo
 	@echo "corndog-web-ui(4200):" && curl -sf -o /dev/null -w "HTTP %{http_code}" http://localhost:4200 && echo
+	@echo "corndog-auth     (8180):" && curl -sf http://localhost:8180/auth/health/ready | head -c 120 && echo
 
 smoke:            ## Run quick smoke tests (golden path + vuln triggers)
 	@echo "=== Menu ==="
