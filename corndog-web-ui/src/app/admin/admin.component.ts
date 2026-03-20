@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { OrderService, Order } from '../services/order.service';
+import { AuthService } from '../services/auth.service';
 
-// TODO: fix before production — add route guard with authentication
 @Component({
   selector: 'app-admin',
   templateUrl: './admin.component.html',
@@ -13,7 +13,10 @@ export class AdminComponent implements OnInit {
   exportMessage = '';
   loading = true;
 
-  constructor(private orderService: OrderService) {}
+  constructor(
+    private orderService: OrderService,
+    public auth: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadOrders();

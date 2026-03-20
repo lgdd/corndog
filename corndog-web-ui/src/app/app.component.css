@@ -75,6 +75,35 @@
   font-size: 0.85rem !important;
 }
 
+.auth-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.btn-auth {
+  background: transparent;
+  border: 1px solid #cbb67a;
+  color: #cbb67a;
+  padding: 4px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.btn-auth:hover {
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  border-color: var(--color-primary);
+}
+
 .app-main {
   min-height: calc(100vh - 64px - 60px);
   padding: 32px 0;

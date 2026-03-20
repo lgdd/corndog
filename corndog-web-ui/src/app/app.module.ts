@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,11 @@ import { ConfirmationComponent } from './confirmation/confirmation.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { AdminComponent } from './admin/admin.component';
 import { SafeHtmlPipe } from './shared/safe-html.pipe';
+import { AuthService } from './services/auth.service';
+
+function initializeKeycloak(auth: AuthService) {
+  return () => auth.init();
+}
 
 @NgModule({
   declarations: [
@@ -28,7 +33,14 @@ import { SafeHtmlPipe } from './shared/safe-html.pipe';
     HttpClientModule,
     FormsModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeKeycloak,
+      multi: true,
+      deps: [AuthService]
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

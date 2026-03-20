@@ -12,6 +12,13 @@
       </a>
       <a routerLink="/order-history" routerLinkActive="active">Orders</a>
       <a routerLink="/admin" routerLinkActive="active" class="admin-link">Admin</a>
+      <span class="auth-controls" *ngIf="auth.isLoggedIn(); else loginBtn">
+        <span class="username">{{ auth.getUsername() }}</span>
+        <button class="btn-auth" (click)="logout()">Logout</button>
+      </span>
+      <ng-template #loginBtn>
+        <button class="btn-auth" (click)="login()">Login</button>
+      </ng-template>
     </nav>
   </div>
 </header>

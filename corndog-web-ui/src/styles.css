@@ -144,6 +144,11 @@ input:focus, textarea:focus {
   color: #856404;
 }
 
+.badge-success {
+  background: #D4EDDA;
+  color: #155724;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
