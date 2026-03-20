@@ -40,6 +40,13 @@ DOS_NESTED_DEPTH = 15000
 
 HEADERS = {"User-Agent": "dd-demo-traffic/1.0"}
 
+KEYCLOAK_TOKEN_URL = "/auth/realms/corndog/protocol/openid-connect/token"
+KEYCLOAK_VALID_USERS = [
+    {"username": "admin", "password": "admin123"},
+    {"username": "user", "password": "user123"},
+]
+KEYCLOAK_CLIENT_ID = "corndog-web"
+
 
 def _nested_json(depth=DOS_NESTED_DEPTH):
     """Build a deeply nested JSON object for DoS testing (CVE-2025-59466)."""
@@ -224,6 +231,58 @@ class CorndogUser(HttpUser):
             headers=HEADERS,
             name="GET /api/orders/search [sqli-union]",
         )
+
+    # ── Keycloak auth scenarios (SIEM signal generation) ────
+
+    @task(2)
+    def keycloak_login(self):
+        """Successful OIDC direct-grant login — generates LOGIN event in Keycloak."""
+        creds = random.choice(KEYCLOAK_VALID_USERS)
+        self.client.post(
+            KEYCLOAK_TOKEN_URL,
+            data={
+                "grant_type": "password",
+                "client_id": KEYCLOAK_CLIENT_ID,
+                "username": creds["username"],
+                "password": creds["password"],
+            },
+            headers=HEADERS,
+            name="POST /auth token [keycloak-login]",
+        )
+
+    @task(2)
+    def keycloak_failed_login(self):
+        """Failed login — generates LOGIN_ERROR event for SIEM detection rules."""
+        self.client.post(
+            KEYCLOAK_TOKEN_URL,
+            data={
+                "grant_type": "password",
+                "client_id": KEYCLOAK_CLIENT_ID,
+                "username": random.choice(["admin", "user", "root", "superadmin"]),
+                "password": "wrong-password-" + str(random.randint(1, 999)),
+            },
+            headers=HEADERS,
+            name="POST /auth token [keycloak-failed-login]",
+            catch_response=True,
+        )
+
+    @task(1)
+    def keycloak_brute_force(self):
+        """Rapid burst of failed logins — triggers brute-force detection patterns."""
+        target_user = random.choice(["admin", "user"])
+        for i in range(random.randint(5, 10)):
+            self.client.post(
+                KEYCLOAK_TOKEN_URL,
+                data={
+                    "grant_type": "password",
+                    "client_id": KEYCLOAK_CLIENT_ID,
+                    "username": target_user,
+                    "password": f"attempt{i}",
+                },
+                headers=HEADERS,
+                name="POST /auth token [keycloak-brute-force]",
+                catch_response=True,
+            )
 
 
 class BurstUser(HttpUser):
