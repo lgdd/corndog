@@ -95,9 +95,23 @@
   background: linear-gradient(135deg, #632CA6 0%, #EC4899 50%, #F59E0B 100%);
 }
 
+.menu-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .menu-emoji {
   font-size: 4.5rem;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  z-index: 1;
+}
+
+.menu-emoji.hidden {
+  display: none;
 }
 
 .combo-badge {

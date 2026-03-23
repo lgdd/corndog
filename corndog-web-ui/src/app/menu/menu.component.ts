@@ -108,6 +108,13 @@ export class MenuComponent implements OnInit {
     return 'gradient-' + item.category;
   }
 
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const emoji = img.parentElement?.querySelector('.menu-emoji') as HTMLElement;
+    if (emoji) emoji.classList.remove('hidden');
+  }
+
   addToCart(item: MenuItem): void {
     const sauces = this.selectedSauces.get(item.id) || [];
     this.cartService.addToCart(item, sauces);

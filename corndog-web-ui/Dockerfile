@@ -11,5 +11,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 COPY --from=build /app/dist/corndog-frontend /usr/share/nginx/html
+RUN chmod -R a+r /usr/share/nginx/html
 EXPOSE 80
 ENTRYPOINT ["/docker-entrypoint.sh"]

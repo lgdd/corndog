@@ -1,6 +1,7 @@
 <header class="app-header">
   <div class="container header-content">
     <a routerLink="/menu" class="logo">
+      <img src="assets/images/logo.png" alt="Corndog" class="logo-img" (error)="$event.target.style.display='none'">
       <span class="logo-text">CORNDOG</span>
     </a>
     <nav class="nav-links">

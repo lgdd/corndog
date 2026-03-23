@@ -17,7 +17,8 @@
     <div class="menu-grid">
       <div class="card menu-card" *ngFor="let item of (activeCategory === 'all' ? getItemsByCategory(cat) : filteredItems)">
         <div class="menu-image" [ngClass]="getGradientClass(item)">
-          <span class="menu-emoji">{{ item.emoji }}</span>
+          <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="menu-img" (error)="onImageError($event)">
+          <span class="menu-emoji" [class.hidden]="item.imageUrl">{{ item.emoji }}</span>
           <span class="combo-badge" *ngIf="item.category === 'combos' && getComboSavings(item) > 0">
             Save {{ getComboSavings(item) | currency }}
           </span>
