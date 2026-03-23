@@ -3,7 +3,7 @@ SHELL := /bin/bash
 export
 
 .PHONY: build up down restart logs ps clean health smoke traffic-up traffic-down \
-       tf-init tf-plan tf-apply tf-destroy tf-output
+       tf-init tf-plan tf-apply tf-destroy tf-output demo
 
 COMPOSE = docker compose
 
@@ -74,6 +74,14 @@ traffic-up:      ## Start the traffic generator
 
 traffic-down:    ## Stop the traffic generator
 	$(COMPOSE) stop corndog-traffic
+
+## —— Demo Scenarios ———————————————————————————————————————
+
+demo:             ## Run all demo failure scenarios
+	./scripts/all.sh
+
+demo-%:           ## Run a single scenario (e.g. make demo-sql-injection, make demo-text4shell)
+	./scripts/$*.sh
 
 ## —— Cleanup ——————————————————————————————————————————————
 
