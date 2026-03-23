@@ -105,18 +105,32 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 
 ## Demo Scenarios — Failure Paths
 
+Each scenario has a standalone script in `scripts/`. Run one at a time or all together:
+
+```bash
+make demo                         # Run all scenarios sequentially
+make demo-sql-injection           # Single scenario
+BASE_URL=http://1.2.3.4:4200 make demo-sql-injection  # Against a remote deploy
+```
+
+| Script | Scenario | Datadog Signal |
+|---|---|---|
+| `make demo-sql-injection` | SQL injection (`' OR 1=1--`) | ASM threat event + IAST vulnerability finding |
+| `make demo-sql-injection-union` | UNION-based SQL injection | ASM threat event |
+| `make demo-cmd-injection-receipt` | Command injection via receipt `format` param | ASM threat event |
+| `make demo-cmd-injection-export` | Command injection via admin export `filename` | ASM + IAST tainted data flow |
+| `make demo-xss` | Stored XSS in order special instructions | IAST XSS vulnerability finding |
+| `make demo-text4shell` | Text4Shell (CVE-2022-42889) via template param | IAST + SCA linked to CVE |
+| `make demo-dos-nested-json` | DoS via ~15k-deep nested JSON (CVE-2025-59466) | Security Research Feed "Impacted" + service crash |
+| `make demo-broken-auth` | Unauthenticated admin API access | ASM broken-auth finding |
+| `make demo-keycloak-failed-login` | Burst of failed Keycloak logins | Cloud SIEM brute-force / credential-stuffing |
+
+Additional observability scenarios (not scripted — produced by traffic generator or manual UI interaction):
+
 | Trigger | Expected Behavior | Datadog Signal |
 |---|---|---|
-| `curl "/api/orders/search?q=' OR 1=1--"` | SQL injection succeeds | ASM threat event + IAST vulnerability finding with code location |
-| `curl "/api/orders/1/receipt?format=txt;cat+/etc/passwd"` | Command injection succeeds | ASM threat event with attack payload in security trace |
-| `POST /api/admin/export` with `"filename": "x; cat /etc/passwd"` | Command injection succeeds | ASM threat event + IAST tainted data flow |
-| Place order with `<img src=x onerror=alert('XSS')>` in special instructions | Stored XSS renders on confirmation/admin views | IAST XSS vulnerability finding |
-| `curl "/api/menu/1/formatted?template=${script:...}"` | Text4Shell interpolation via `StringSubstitutor` | IAST vulnerability linked to CVE-2022-42889 (SCA) |
-| Any request to backend services | Vulnerable dependencies detected | SCA findings in Vulnerability Management (Text4Shell, H2, JWT CVEs) |
-| `POST /api/loyalty/validate-config` with ~15k-deep nested JSON | Process crashes (stack overflow + `async_hooks`) | Security Research Feed shows "Impacted" for CVE-2025-59466; service restarts via `restart: on-failure` |
-| Burst of failed Keycloak logins from single IP | `LOGIN_ERROR` events in syslog | Cloud SIEM brute-force detection rule fires |
+| Any request to backend services | Vulnerable dependencies detected | SCA findings in Vulnerability Management |
 | Successful logins from geographically distant IPs | `LOGIN` events with different source IPs | Cloud SIEM impossible-travel detection |
-| Failed logins across many usernames from few IPs | `LOGIN_ERROR` events with varied `usr.id` | Cloud SIEM credential-stuffing detection |
 | Frontend JS error (e.g., network failure) | Error captured in browser | RUM Error Tracking with stack trace and Session Replay |
 | Slow API response from backend | User-facing latency | RUM resource timing correlated to APM trace waterfall |
 | Failed fetch to backend API | Request error in browser | RUM resource error + missing/error APM trace |
@@ -290,6 +304,7 @@ corndog/
 ├── corndog-admin/          → .NET 6, ASP.NET Core (dd-trace-dotnet)
 ├── corndog-loyalty/        → Node.js 18, Express 4.18.2 (dd-trace)
 ├── corndog-auth/            → Keycloak realm config (corndog-realm.json)
+├── scripts/                → One-click demo scenario scripts (make demo-*)
 ├── traffic/                → Locust traffic generator (excluded from DD)
 ├── k8s/                    → Kubernetes manifests
 └── .github/workflows/      → CI with Datadog CI Visibility

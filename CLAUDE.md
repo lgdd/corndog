@@ -22,6 +22,8 @@ make build       # Build all service images (no start)
 make ps          # Show running containers
 make traffic-up  # Start the traffic generator only
 make traffic-down # Stop the traffic generator
+make demo        # Run all demo failure scenarios (scripts/)
+make demo-sql-injection  # Run a single scenario (any script name works)
 make help        # Show all Makefile targets
 ```
 
