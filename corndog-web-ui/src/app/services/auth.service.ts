@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import Keycloak from 'keycloak-js';
 import { environment } from '../../environments/environment';
+import { RumService } from './rum.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private keycloak: Keycloak;
 
-  constructor() {
+  constructor(private rum: RumService) {
     this.keycloak = new Keycloak({
       url: environment.keycloak.url,
       realm: environment.keycloak.realm,
@@ -20,6 +21,11 @@ export class AuthService {
       silentCheckSsoRedirectUri:
         window.location.origin + '/assets/silent-check-sso.html',
       checkLoginIframe: false
+    }).then(authenticated => {
+      if (authenticated) {
+        this.syncRumUser();
+      }
+      return authenticated;
     });
   }
 
@@ -28,6 +34,7 @@ export class AuthService {
   }
 
   logout(): Promise<void> {
+    this.rum.clearUser();
     return this.keycloak.logout({ redirectUri: window.location.origin });
   }
 
@@ -41,5 +48,15 @@ export class AuthService {
 
   getToken(): string | undefined {
     return this.keycloak.token;
+  }
+
+  private syncRumUser(): void {
+    const token = this.keycloak.tokenParsed;
+    if (!token) return;
+    this.rum.setUser({
+      id: token['sub'] ?? '',
+      email: token['email'],
+      name: token['preferred_username']
+    });
   }
 }

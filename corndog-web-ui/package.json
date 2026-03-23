@@ -17,6 +17,7 @@
     "@angular/platform-browser": "~15.2.0",
     "@angular/platform-browser-dynamic": "~15.2.0",
     "@angular/router": "~15.2.0",
+    "@datadog/browser-rum": "^6.5.0",
     "keycloak-js": "^26.2.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

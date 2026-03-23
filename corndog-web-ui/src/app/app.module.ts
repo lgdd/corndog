@@ -12,6 +12,11 @@ import { OrderHistoryComponent } from './order-history/order-history.component';
 import { AdminComponent } from './admin/admin.component';
 import { SafeHtmlPipe } from './shared/safe-html.pipe';
 import { AuthService } from './services/auth.service';
+import { RumService } from './services/rum.service';
+
+function initializeRum(rum: RumService) {
+  return () => rum.init();
+}
 
 function initializeKeycloak(auth: AuthService) {
   return () => auth.init();
@@ -34,6 +39,12 @@ function initializeKeycloak(auth: AuthService) {
     FormsModule
   ],
   providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeRum,
+      multi: true,
+      deps: [RumService]
+    },
     {
       provide: APP_INITIALIZER,
       useFactory: initializeKeycloak,

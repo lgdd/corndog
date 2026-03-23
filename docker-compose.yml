@@ -214,6 +214,12 @@ services:
     build: ./corndog-web-ui
     ports:
       - "4200:80"
+    environment:
+      DD_APPLICATION_ID: "${DD_APPLICATION_ID:-}"
+      DD_CLIENT_TOKEN: "${DD_CLIENT_TOKEN:-}"
+      DD_SITE: "${DD_SITE:-datadoghq.com}"
+      DD_ENV: "${DD_ENV:-corndog-260318}"
+      DD_VERSION: "${DD_VERSION:-1.0.0}"
     labels:
       com.datadoghq.tags.env: "${DD_ENV:-corndog-260318}"
       com.datadoghq.tags.service: "corndog-web-ui"
