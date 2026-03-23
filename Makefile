@@ -7,6 +7,9 @@ export
 
 COMPOSE = docker compose
 
+export DD_GIT_REPOSITORY_URL ?= $(shell git config --get remote.origin.url)
+export DD_GIT_COMMIT_SHA    ?= $(shell git rev-parse HEAD)
+
 ## —— Lifecycle ————————————————————————————————————————————
 
 build:            ## Build all service images
