@@ -1,18 +1,18 @@
 <div class="confirmation-page">
   <div *ngIf="loading" class="empty-state">
-    <div class="emoji">⏳</div>
     <p>Loading order...</p>
   </div>
 
   <div *ngIf="!loading && !order" class="empty-state">
-    <div class="emoji">😕</div>
     <h3>Order not found</h3>
     <a routerLink="/menu" class="btn btn-primary" style="margin-top: 16px">Back to Menu</a>
   </div>
 
   <div *ngIf="order" class="confirmation-content">
     <div class="success-header">
-      <div class="success-icon">✅</div>
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
       <h1 class="page-title">Order Confirmed!</h1>
       <p class="order-id">Order #{{ order.id }}</p>
     </div>
@@ -30,7 +30,7 @@
 
       <div class="items-list">
         <div class="order-item" *ngFor="let item of order.items">
-          <span>{{ item.name }} × {{ item.quantity }}</span>
+          <span>{{ item.name }} x {{ item.quantity }}</span>
           <span>{{ item.price * item.quantity | currency }}</span>
         </div>
       </div>
@@ -45,10 +45,16 @@
         <!-- TODO: fix before production — renders user input as raw HTML (XSS vulnerability) -->
         <div class="instructions-content" [innerHTML]="order.specialInstructions | safeHtml"></div>
       </div>
+
+      <div class="receipt-section">
+        <a class="btn btn-secondary btn-sm" [href]="'/api/orders/' + order.id + '/receipt?format=txt'" target="_blank">
+          Download Receipt
+        </a>
+      </div>
     </div>
 
     <div class="actions">
-      <a routerLink="/menu" class="btn btn-primary">🌭 Order More</a>
+      <a routerLink="/menu" class="btn btn-primary">Order More</a>
       <a routerLink="/order-history" class="btn btn-secondary">View Order History</a>
     </div>
   </div>

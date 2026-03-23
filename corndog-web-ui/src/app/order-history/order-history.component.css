@@ -41,6 +41,7 @@
 
 .order-num {
   font-family: var(--font-display);
+  font-weight: 700;
   color: var(--color-secondary);
 }
 

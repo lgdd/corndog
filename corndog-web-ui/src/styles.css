@@ -1,19 +1,20 @@
 :root {
-  --color-primary: #F5C518;
-  --color-primary-dark: #D4A90A;
-  --color-secondary: #3B1F0A;
-  --color-accent: #E63946;
-  --color-bg: #FFF9E6;
+  --color-primary: #632CA6;
+  --color-primary-dark: #4A1F80;
+  --color-accent: #8000FF;
+  --color-secondary: #1A1A1A;
+  --color-bg: #F8F6FC;
   --color-card: #FFFFFF;
-  --color-text: #2D2006;
-  --color-text-light: #7A6840;
-  --color-border: #E8D9B5;
+  --color-text: #1A1A1A;
+  --color-text-light: #6B6B6B;
+  --color-border: #E4DFF0;
   --color-success: #2D8B46;
-  --font-display: 'Fredoka One', cursive;
+  --color-danger: #E63946;
+  --font-display: 'Poppins', sans-serif;
   --font-body: 'Inter', sans-serif;
-  --radius: 12px;
-  --shadow: 0 2px 12px rgba(59, 31, 10, 0.08);
-  --shadow-hover: 0 4px 20px rgba(59, 31, 10, 0.14);
+  --radius: 16px;
+  --shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 *, *::before, *::after {
@@ -31,7 +32,7 @@ body {
 }
 
 a {
-  color: var(--color-secondary);
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -45,7 +46,7 @@ button {
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -53,6 +54,7 @@ button {
 .page-title {
   font-family: var(--font-display);
   font-size: 2rem;
+  font-weight: 700;
   color: var(--color-secondary);
   margin-bottom: 24px;
 }
@@ -71,7 +73,7 @@ button {
 
 .btn-primary {
   background: var(--color-primary);
-  color: var(--color-secondary);
+  color: #fff;
 }
 
 .btn-primary:hover {
@@ -86,12 +88,12 @@ button {
 }
 
 .btn-secondary:hover {
-  background: #2A1507;
+  background: #333;
   transform: translateY(-1px);
 }
 
 .btn-danger {
-  background: var(--color-accent);
+  background: var(--color-danger);
   color: #fff;
 }
 

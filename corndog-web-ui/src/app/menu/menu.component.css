@@ -5,57 +5,228 @@
 .page-subtitle {
   color: var(--color-text-light);
   margin-top: -16px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   font-size: 1.1rem;
 }
 
+/* Category navigation */
+.category-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.category-pill {
+  padding: 8px 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-card);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  transition: all 0.2s ease;
+}
+
+.category-pill:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.category-pill.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Section headers */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 16px;
+  margin-top: 32px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Menu grid */
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  margin-bottom: 16px;
 }
 
 .menu-card {
   display: flex;
   flex-direction: column;
-  text-align: center;
-  padding: 32px 24px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Gradient image area */
+.menu-image {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.gradient-corndogs {
+  background: linear-gradient(135deg, #632CA6 0%, #8000FF 50%, #A855F7 100%);
+}
+
+.gradient-sides {
+  background: linear-gradient(135deg, #F59E0B 0%, #F97316 50%, #EF4444 100%);
+}
+
+.gradient-drinks {
+  background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 50%, #8B5CF6 100%);
+}
+
+.gradient-combos {
+  background: linear-gradient(135deg, #632CA6 0%, #EC4899 50%, #F59E0B 100%);
 }
 
 .menu-emoji {
-  font-size: 3.5rem;
-  margin-bottom: 16px;
+  font-size: 4.5rem;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.combo-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Card body */
+.menu-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .menu-name {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--color-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .menu-desc {
   color: var(--color-text-light);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  margin-bottom: 12px;
   flex: 1;
-  margin-bottom: 20px;
 }
 
+/* Combo contents */
+.combo-contents {
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg);
+  border-radius: 8px;
+}
+
+.combo-label {
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-right: 4px;
+}
+
+.combo-item {
+  color: var(--color-text-light);
+}
+
+/* Sauce selector */
+.sauce-selector {
+  margin-bottom: 12px;
+}
+
+.sauce-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sauce-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sauce-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fff;
+}
+
+.sauce-option:hover {
+  border-color: var(--color-primary);
+}
+
+.sauce-option input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.sauce-option input:checked + .sauce-name {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Footer with price and CTA */
 .menu-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--color-border);
+  margin-top: auto;
 }
 
 .menu-price {
   font-family: var(--font-display);
   font-size: 1.3rem;
+  font-weight: 700;
   color: var(--color-secondary);
 }
 
 .btn.added {
   background: var(--color-success);
   color: #fff;
+}
+
+@media (max-width: 768px) {
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
 }

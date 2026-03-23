@@ -1,9 +1,9 @@
 <div class="cart-page">
-  <h1 class="page-title">🛒 Your Cart</h1>
+  <h1 class="page-title">Your Cart</h1>
 
   <ng-container *ngIf="(cart$ | async) as items">
     <div *ngIf="items.length === 0" class="empty-state">
-      <div class="emoji">🌭</div>
+      <div class="emoji">🛒</div>
       <h3>Your cart is empty</h3>
       <p>Add some delicious corndogs from our menu!</p>
       <a routerLink="/menu" class="btn btn-primary" style="margin-top: 16px">Browse Menu</a>
@@ -15,15 +15,16 @@
           <span class="item-emoji">{{ ci.menuItem.emoji }}</span>
           <div class="item-info">
             <span class="item-name">{{ ci.menuItem.name }}</span>
+            <span class="item-sauces" *ngIf="ci.sauces.length > 0">{{ formatSauces(ci.sauces) }}</span>
             <span class="item-price">{{ ci.menuItem.price | currency }} each</span>
           </div>
           <div class="item-controls">
-            <button class="qty-btn" (click)="updateQuantity(ci.menuItem.id, ci.quantity - 1)">−</button>
+            <button class="qty-btn" (click)="updateQuantity(ci, ci.quantity - 1)">−</button>
             <span class="qty-value">{{ ci.quantity }}</span>
-            <button class="qty-btn" (click)="updateQuantity(ci.menuItem.id, ci.quantity + 1)">+</button>
+            <button class="qty-btn" (click)="updateQuantity(ci, ci.quantity + 1)">+</button>
           </div>
           <span class="item-total">{{ ci.menuItem.price * ci.quantity | currency }}</span>
-          <button class="remove-btn" (click)="removeItem(ci.menuItem.id)">✕</button>
+          <button class="remove-btn" (click)="removeItem(ci)">✕</button>
         </div>
       </div>
 
@@ -41,6 +42,7 @@
           <label for="specialInstructions">Special Instructions</label>
           <textarea
             id="specialInstructions"
+            appHackerHighlight="xss"
             [(ngModel)]="specialInstructions"
             placeholder="Any special requests? Extra mustard, no ketchup, etc."
             rows="3"></textarea>
@@ -54,7 +56,7 @@
             class="btn btn-primary place-order-btn"
             [disabled]="!customerName.trim() || isSubmitting"
             (click)="placeOrder(items, total)">
-            {{ isSubmitting ? 'Placing Order...' : '🌭 Place Order' }}
+            {{ isSubmitting ? 'Placing Order...' : 'Place Order' }}
           </button>
         </ng-container>
       </div>

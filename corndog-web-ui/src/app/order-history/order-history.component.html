@@ -1,22 +1,23 @@
 <div class="history-page">
-  <h1 class="page-title">📋 Order History</h1>
+  <h1 class="page-title">Order History</h1>
   <p class="page-subtitle">Search for your past orders by name</p>
 
   <div class="search-bar card">
     <div class="search-input-group">
       <input
+        id="searchQuery"
         type="text"
+        appHackerHighlight="sqli"
         [(ngModel)]="searchQuery"
         placeholder="Enter your name to find orders..."
         (keyup.enter)="search()">
       <button class="btn btn-primary" (click)="search()" [disabled]="loading">
-        {{ loading ? 'Searching...' : '🔍 Search' }}
+        {{ loading ? 'Searching...' : 'Search' }}
       </button>
     </div>
   </div>
 
   <div *ngIf="searched && orders.length === 0" class="empty-state">
-    <div class="emoji">🔍</div>
     <h3>No orders found</h3>
     <p>Try a different name</p>
   </div>
@@ -34,7 +35,7 @@
         </div>
         <div class="order-items-list">
           <span *ngFor="let item of order.items; let last = last">
-            {{ item.name }} (×{{ item.quantity }}){{ last ? '' : ', ' }}
+            {{ item.name }} (x{{ item.quantity }}){{ last ? '' : ', ' }}
           </span>
         </div>
         <div class="order-instructions" *ngIf="order.specialInstructions">

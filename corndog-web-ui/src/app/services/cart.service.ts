@@ -5,6 +5,7 @@ import { MenuItem } from './menu.service';
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
+  sauces: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,30 +20,40 @@ export class CartService {
     map(items => items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0))
   );
 
-  addToCart(menuItem: MenuItem): void {
+  addToCart(menuItem: MenuItem, sauces: string[] = []): void {
     const current = this.cartItems.value;
-    const existing = current.find(item => item.menuItem.id === menuItem.id);
+    const sauceKey = [...sauces].sort().join(',');
+    const existing = current.find(item =>
+      item.menuItem.id === menuItem.id &&
+      [...item.sauces].sort().join(',') === sauceKey
+    );
 
     if (existing) {
       existing.quantity += 1;
       this.cartItems.next([...current]);
     } else {
-      this.cartItems.next([...current, { menuItem, quantity: 1 }]);
+      this.cartItems.next([...current, { menuItem, quantity: 1, sauces }]);
     }
   }
 
-  removeFromCart(menuItemId: number): void {
-    const current = this.cartItems.value.filter(item => item.menuItem.id !== menuItemId);
+  removeFromCart(menuItemId: number, sauces: string[] = []): void {
+    const sauceKey = [...sauces].sort().join(',');
+    const current = this.cartItems.value.filter(item =>
+      !(item.menuItem.id === menuItemId && [...item.sauces].sort().join(',') === sauceKey)
+    );
     this.cartItems.next(current);
   }
 
-  updateQuantity(menuItemId: number, quantity: number): void {
+  updateQuantity(menuItemId: number, quantity: number, sauces: string[] = []): void {
     if (quantity <= 0) {
-      this.removeFromCart(menuItemId);
+      this.removeFromCart(menuItemId, sauces);
       return;
     }
     const current = this.cartItems.value;
-    const item = current.find(i => i.menuItem.id === menuItemId);
+    const sauceKey = [...sauces].sort().join(',');
+    const item = current.find(i =>
+      i.menuItem.id === menuItemId && [...i.sauces].sort().join(',') === sauceKey
+    );
     if (item) {
       item.quantity = quantity;
       this.cartItems.next([...current]);

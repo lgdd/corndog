@@ -1,0 +1,59 @@
+<div class="panel-backdrop" *ngIf="panelOpen$ | async" (click)="closePanel()"></div>
+<div class="hacker-panel" [class.open]="panelOpen$ | async">
+  <div class="panel-header">
+    <span class="panel-title">&#9760; HACKER MODE</span>
+    <button class="close-btn" (click)="closePanel()">&#10005;</button>
+  </div>
+
+  <div class="panel-body">
+    <p class="panel-intro">Guided exploit scenarios for this demo app. Each triggers a detection in Datadog.</p>
+
+    <div class="scenario-list">
+      <div
+        class="scenario-card"
+        *ngFor="let s of scenarios"
+        [class.expanded]="expandedId === s.id">
+        <button class="scenario-header" (click)="toggleScenario(s)">
+          <span class="scenario-name">{{ s.name }}</span>
+          <span class="expand-icon">{{ expandedId === s.id ? '−' : '+' }}</span>
+        </button>
+
+        <div class="scenario-body" *ngIf="expandedId === s.id">
+          <p class="scenario-desc">{{ s.description }}</p>
+
+          <div class="scenario-steps">
+            <div class="step" *ngFor="let step of s.steps; let i = index">
+              <span class="step-num">{{ i + 1 }}</span>
+              <span class="step-text">{{ step }}</span>
+            </div>
+          </div>
+
+          <div class="payload-block" *ngIf="s.payload">
+            <span class="payload-label">Payload</span>
+            <code class="payload-code">{{ s.payload }}</code>
+          </div>
+
+          <div class="dd-hint">
+            <span class="dd-label">Where to look in Datadog:</span>
+            <span class="dd-value">{{ s.datadogWhereToLook }}</span>
+          </div>
+
+          <div class="scenario-actions">
+            <button
+              class="action-btn try-btn"
+              *ngIf="hasTryIt(s)"
+              (click)="tryIt(s)">
+              Try it &#8594;
+            </button>
+            <button
+              class="action-btn copy-btn"
+              *ngIf="s.curlCommand"
+              (click)="copyToClipboard(s.curlCommand, s.id)">
+              {{ copiedId === s.id ? 'Copied!' : 'Copy curl' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

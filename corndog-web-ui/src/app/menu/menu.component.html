@@ -1,21 +1,61 @@
 <div class="menu-page">
-  <h1 class="page-title">🌭 Our Menu</h1>
-  <p class="page-subtitle">Handcrafted corndogs, made with love</p>
+  <h1 class="page-title">Our Menu</h1>
+  <p class="page-subtitle">Handcrafted corndogs, sides, drinks &amp; combos</p>
 
-  <div class="menu-grid">
-    <div class="card menu-card" *ngFor="let item of menuItems">
-      <div class="menu-emoji">{{ item.emoji }}</div>
-      <h3 class="menu-name">{{ item.name }}</h3>
-      <p class="menu-desc">{{ item.description }}</p>
-      <div class="menu-footer">
-        <span class="menu-price">{{ item.price | currency }}</span>
-        <button
-          class="btn btn-primary btn-sm"
-          (click)="addToCart(item)"
-          [class.added]="addedItemId === item.id">
-          {{ addedItemId === item.id ? '✓ Added!' : 'Add to Cart' }}
-        </button>
+  <div class="category-nav">
+    <button
+      *ngFor="let cat of categories"
+      class="category-pill"
+      [class.active]="activeCategory === cat"
+      (click)="filterByCategory(cat)">
+      {{ categoryLabels[cat] }}
+    </button>
+  </div>
+
+  <ng-container *ngFor="let cat of activeCategories">
+    <h2 class="section-title" *ngIf="activeCategory === 'all'">{{ categoryLabels[cat] }}</h2>
+    <div class="menu-grid">
+      <div class="card menu-card" *ngFor="let item of (activeCategory === 'all' ? getItemsByCategory(cat) : filteredItems)">
+        <div class="menu-image" [ngClass]="getGradientClass(item)">
+          <span class="menu-emoji">{{ item.emoji }}</span>
+          <span class="combo-badge" *ngIf="item.category === 'combos' && getComboSavings(item) > 0">
+            Save {{ getComboSavings(item) | currency }}
+          </span>
+        </div>
+        <div class="menu-body">
+          <h3 class="menu-name">{{ item.name }}</h3>
+          <p class="menu-desc">{{ item.description }}</p>
+
+          <div class="combo-contents" *ngIf="item.category === 'combos' && getComboItems(item).length > 0">
+            <span class="combo-label">Includes:</span>
+            <span class="combo-item" *ngFor="let ci of getComboItems(item); let last = last">
+              {{ getComboItemName(ci.menuItemId) }}{{ last ? '' : ', ' }}
+            </span>
+          </div>
+
+          <div class="sauce-selector" *ngIf="getAvailableSauces(item).length > 0">
+            <span class="sauce-label">Sauces:</span>
+            <div class="sauce-options">
+              <label class="sauce-option" *ngFor="let sauce of getAvailableSauces(item)">
+                <input type="checkbox"
+                  [checked]="isSauceSelected(item.id, sauce)"
+                  (change)="toggleSauce(item.id, sauce)">
+                <span class="sauce-name">{{ formatSauceName(sauce) }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="menu-footer">
+            <span class="menu-price">{{ item.price | currency }}</span>
+            <button
+              class="btn btn-primary btn-sm"
+              (click)="addToCart(item)"
+              [class.added]="addedItemId === item.id">
+              {{ addedItemId === item.id ? 'Added!' : 'Add to Cart' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </ng-container>
 </div>

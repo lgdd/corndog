@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
 import { OrderService } from '../services/order.service';
 
@@ -19,15 +19,26 @@ export class CartComponent {
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
-    private router: Router
-  ) {}
-
-  updateQuantity(menuItemId: number, quantity: number): void {
-    this.cartService.updateQuantity(menuItemId, quantity);
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.route.queryParams.subscribe(params => {
+      if (params['prefill-instructions']) {
+        this.specialInstructions = params['prefill-instructions'];
+      }
+    });
   }
 
-  removeItem(menuItemId: number): void {
-    this.cartService.removeFromCart(menuItemId);
+  updateQuantity(ci: CartItem, quantity: number): void {
+    this.cartService.updateQuantity(ci.menuItem.id, quantity, ci.sauces);
+  }
+
+  removeItem(ci: CartItem): void {
+    this.cartService.removeFromCart(ci.menuItem.id, ci.sauces);
+  }
+
+  formatSauces(sauces: string[]): string {
+    return sauces.map(s => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(', ');
   }
 
   placeOrder(items: CartItem[], total: number): void {
@@ -38,7 +49,8 @@ export class CartComponent {
       menuItemId: ci.menuItem.id,
       name: ci.menuItem.name,
       quantity: ci.quantity,
-      price: ci.menuItem.price
+      price: ci.menuItem.price,
+      sauces: ci.sauces
     }));
 
     this.orderService.placeOrder({

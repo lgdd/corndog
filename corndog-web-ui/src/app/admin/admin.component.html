@@ -1,6 +1,6 @@
 <div class="admin-page">
   <div class="admin-header">
-    <h1 class="page-title">🔧 Admin Panel</h1>
+    <h1 class="page-title">Admin Panel</h1>
     <span class="badge badge-success">Logged in as {{ auth.getUsername() }}</span>
   </div>
 
@@ -8,21 +8,21 @@
     <h3>Export Orders</h3>
     <div class="export-controls">
       <input
+        id="exportFilename"
         type="text"
+        appHackerHighlight="cmdi-export"
         [(ngModel)]="exportFilename"
         placeholder="Filename (e.g., orders_export.csv)">
-      <button class="btn btn-secondary" (click)="exportOrders()">📤 Export</button>
+      <button class="btn btn-secondary" (click)="exportOrders()">Export</button>
     </div>
     <div class="export-message" *ngIf="exportMessage">{{ exportMessage }}</div>
   </div>
 
   <div *ngIf="loading" class="empty-state">
-    <div class="emoji">⏳</div>
     <p>Loading orders...</p>
   </div>
 
   <div *ngIf="!loading && orders.length === 0" class="empty-state">
-    <div class="emoji">📭</div>
     <h3>No orders yet</h3>
   </div>
 
@@ -44,7 +44,7 @@
           <td>{{ order.customerName }}</td>
           <td class="items-cell">
             <span *ngFor="let item of order.items; let last = last">
-              {{ item.name }} (×{{ item.quantity }}){{ last ? '' : ', ' }}
+              {{ item.name }} (x{{ item.quantity }}){{ last ? '' : ', ' }}
             </span>
           </td>
           <!-- TODO: fix before production — renders user input as raw HTML (XSS vulnerability) -->

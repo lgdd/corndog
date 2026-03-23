@@ -1,0 +1,8 @@
+<button
+  class="hacker-fab"
+  [class.active]="hackerMode$ | async"
+  (click)="togglePanel()"
+  title="Toggle Hacker Mode">
+  <span class="fab-icon">&#9760;</span>
+  <span class="fab-label">Hacker Mode</span>
+</button>

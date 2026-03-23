@@ -32,6 +32,12 @@
   color: var(--color-secondary);
 }
 
+.item-sauces {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  margin-top: 2px;
+}
+
 .item-price {
   font-size: 0.85rem;
   color: var(--color-text-light);
@@ -88,11 +94,12 @@
 
 .remove-btn:hover {
   opacity: 1;
-  color: var(--color-accent);
+  color: var(--color-danger);
 }
 
 .checkout-section h3 {
   font-family: var(--font-display);
+  font-weight: 700;
   color: var(--color-secondary);
   margin-bottom: 20px;
 }
@@ -123,6 +130,7 @@
 .total-price {
   font-family: var(--font-display);
   font-size: 1.4rem;
+  font-weight: 700;
   color: var(--color-secondary);
 }
 

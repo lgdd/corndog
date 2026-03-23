@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { OrderService, Order } from '../services/order.service';
 import { AuthService } from '../services/auth.service';
 
@@ -15,8 +16,15 @@ export class AdminComponent implements OnInit {
 
   constructor(
     private orderService: OrderService,
-    public auth: AuthService
-  ) {}
+    public auth: AuthService,
+    private route: ActivatedRoute
+  ) {
+    this.route.queryParams.subscribe(params => {
+      if (params['prefill-filename']) {
+        this.exportFilename = params['prefill-filename'];
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadOrders();
