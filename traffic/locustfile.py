@@ -25,6 +25,10 @@ from locust import HttpUser, between, constant_pacing, task
 LATENCY_MS = int(os.getenv("TRAFFIC_LATENCY_MS", "0"))
 
 MENU_ITEM_IDS = [1, 2, 3, 4]
+EXPANDED_ITEM_IDS = [1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15, 16, 20, 21, 22]
+SIDE_IDS = [10, 11, 12, 13]
+DRINK_IDS = [14, 15, 16]
+COMBO_IDS = [20, 21, 22]
 
 CUSTOMER_NAMES = [
     "Casey Jones", "Pat Kim", "Jordan Lee", "Alex Rivera",
@@ -183,6 +187,43 @@ class CorndogUser(HttpUser):
             },
             headers=HEADERS,
             name="POST /api/loyalty/earn [golden]",
+        )
+        _extra_latency()
+
+    @task(3)
+    def browse_menu_by_category(self):
+        """GET /api/menu?category=... — browse menu filtered by category."""
+        category = random.choice(["corndogs", "sides", "drinks", "combos"])
+        self.client.get(
+            f"/api/menu?category={category}",
+            headers=HEADERS,
+            name="GET /api/menu?category [golden]",
+        )
+        _extra_latency()
+
+    @task(3)
+    def place_expanded_order(self):
+        """POST /api/orders — order from expanded menu with sauces."""
+        item_id = random.choice(EXPANDED_ITEM_IDS)
+        qty = random.randint(1, 2)
+        sauces = random.sample(["mustard", "ketchup", "ranch", "spicy-mayo"], k=random.randint(0, 2))
+        prices = {
+            1: 4.99, 2: 5.99, 3: 6.49, 4: 5.49, 5: 6.99, 6: 5.49,
+            10: 3.49, 11: 3.99, 12: 2.99, 13: 4.49,
+            14: 2.99, 15: 2.49, 16: 1.99,
+            20: 9.99, 21: 10.99, 22: 9.99,
+        }
+        price = prices.get(item_id, 4.99)
+        self.client.post(
+            "/api/orders",
+            json={
+                "customerName": random.choice(CUSTOMER_NAMES),
+                "items": [{"menu_item_id": item_id, "quantity": qty, "sauces": sauces}],
+                "specialInstructions": "",
+                "totalPrice": round(price * qty, 2),
+            },
+            headers=HEADERS,
+            name="POST /api/orders [golden-expanded]",
         )
         _extra_latency()
 
