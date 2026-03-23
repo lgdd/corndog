@@ -56,13 +56,13 @@ cd corndog-web-ui && npx ng build --configuration production
 ```
 
 ### Prerequisites
-`DD_API_KEY` and `DD_SITE` must be set. Generate `.env` via: `envsubst < .env.example > .env`
+`DD_API_KEY` and `DD_SITE` must be set. For RUM, also set `DD_APPLICATION_ID` and `DD_CLIENT_TOKEN`. Generate `.env` via: `envsubst < .env.example > .env`
 
 ## Architecture
 
 Five backend services share a single PostgreSQL database (`corndog`), fronted by an Angular SPA served through Nginx:
 
-- **corndog-web-ui** (Angular 15 / Nginx, :4200→80) — SPA frontend. Nginx reverse-proxies `/api/menu`, `/api/orders`, `/api/admin`, `/api/loyalty` to the respective backends and `/auth/` to Keycloak. Admin route is guarded by Keycloak login via `keycloak-js`.
+- **corndog-web-ui** (Angular 15 / Nginx, :4200→80) — SPA frontend. Nginx reverse-proxies `/api/menu`, `/api/orders`, `/api/admin`, `/api/loyalty` to the respective backends and `/auth/` to Keycloak. Admin route is guarded by Keycloak login via `keycloak-js`. Datadog RUM Browser SDK (`@datadog/browser-rum`) is initialized via `RumService` in `APP_INITIALIZER` — runtime config injected from env vars by `docker-entrypoint.sh` into `assets/env-config.js`. RUM sessions are correlated to APM traces via `allowedTracingUrls`. Keycloak user identity is synced to RUM via `datadogRum.setUser()` in `AuthService`.
 - **corndog-menu** (Spring Boot / Java 17, :8080) — Menu CRUD. JPA/Hibernate with `menu_items` table. Entry point: `CornDogApplication.java`, controller at `controller/MenuController.java`.
 - **corndog-orders** (Flask / Python 3.11, :5000) — Order placement, search, receipts. SQLAlchemy with `orders` table. Flask app factory in `app/main.py`, routes in `app/routes/orders.py`. Run via `ddtrace-run gunicorn`.
 - **corndog-admin** (.NET 6 / ASP.NET Core, :5001→80) — Admin order list and export. EF Core with Npgsql. Controller at `src/Controllers/AdminController.cs`, service at `src/Services/OrderService.cs`.

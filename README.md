@@ -14,6 +14,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 | **Code Security — IAST** | Taint-tracking vulnerability detection at runtime |
 | **Code Security — SCA** | Dependency vulnerability scanning (CVEs in pinned libs) |
 | **Workload Protection** | Runtime security (CWS) on containers |
+| **Real User Monitoring** | Browser SDK on Angular SPA — sessions, errors, resources, Session Replay |
 | **Cloud SIEM** | Keycloak auth events via syslog — login, failed login, brute force detection |
 
 ## Architecture
@@ -113,6 +114,9 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | Burst of failed Keycloak logins from single IP | `LOGIN_ERROR` events in syslog | Cloud SIEM brute-force detection rule fires |
 | Successful logins from geographically distant IPs | `LOGIN` events with different source IPs | Cloud SIEM impossible-travel detection |
 | Failed logins across many usernames from few IPs | `LOGIN_ERROR` events with varied `usr.id` | Cloud SIEM credential-stuffing detection |
+| Frontend JS error (e.g., network failure) | Error captured in browser | RUM Error Tracking with stack trace and Session Replay |
+| Slow API response from backend | User-facing latency | RUM resource timing correlated to APM trace waterfall |
+| Failed fetch to backend API | Request error in browser | RUM resource error + missing/error APM trace |
 
 ## Traffic Generator
 
@@ -168,6 +172,8 @@ Export these variables before starting:
 |---|---|---|
 | `DD_API_KEY` | Datadog API key | Yes |
 | `DD_SITE` | Datadog site (e.g., `datadoghq.com`) | Yes |
+| `DD_APPLICATION_ID` | RUM application ID (from Datadog RUM setup) | For RUM |
+| `DD_CLIENT_TOKEN` | RUM client token (from Datadog RUM setup) | For RUM |
 
 ## Quick Start
 
@@ -284,6 +290,8 @@ corndog/
 |---|---|---|
 | `DD_API_KEY` | Datadog API key | — |
 | `DD_SITE` | Datadog site | — |
+| `DD_APPLICATION_ID` | RUM application ID | — |
+| `DD_CLIENT_TOKEN` | RUM client token | — |
 | `DD_ENV` | Datadog environment | `corndog-260318` |
 | `DD_VERSION` | Service version | `1.0.0` |
 | `DD_APPSEC_ENABLED` | ASM threat detection | `true` |
