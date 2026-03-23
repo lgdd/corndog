@@ -22,6 +22,10 @@ public class MenuService {
         return menuItemRepository.findAll();
     }
 
+    public List<MenuItem> getItemsByCategory(String category) {
+        return menuItemRepository.findByCategoryOrderBySortOrder(category);
+    }
+
     public MenuItem getItem(Long id) {
         return menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found: " + id));
@@ -34,6 +38,7 @@ public class MenuService {
         values.put("description", item.getDescription());
         values.put("price", item.getPrice().toString());
         values.put("emoji", item.getEmoji());
+        values.put("category", item.getCategory());
         String result = new StringSubstitutor(values).replace(template);
         return Map.of("formatted", result);
     }

@@ -19,7 +19,10 @@ public class MenuController {
     }
 
     @GetMapping
-    public List<MenuItem> getAllItems() {
+    public List<MenuItem> getAllItems(@RequestParam(required = false) String category) {
+        if (category != null && !category.isEmpty()) {
+            return menuService.getItemsByCategory(category);
+        }
         return menuService.getAllItems();
     }
 

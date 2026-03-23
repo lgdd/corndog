@@ -19,6 +19,20 @@ public class MenuItem {
 
     private String emoji;
 
+    private String category;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "available_sauces", columnDefinition = "jsonb")
+    private String availableSauces;
+
+    @Column(name = "combo_items", columnDefinition = "jsonb")
+    private String comboItems;
+
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
     public MenuItem() {
     }
 
@@ -67,5 +81,45 @@ public class MenuItem {
 
     public void setEmoji(String emoji) {
         this.emoji = emoji;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getAvailableSauces() {
+        return availableSauces;
+    }
+
+    public void setAvailableSauces(String availableSauces) {
+        this.availableSauces = availableSauces;
+    }
+
+    public String getComboItems() {
+        return comboItems;
+    }
+
+    public void setComboItems(String comboItems) {
+        this.comboItems = comboItems;
+    }
+
+    public Integer getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(Integer sortOrder) {
+        this.sortOrder = sortOrder;
     }
 }
