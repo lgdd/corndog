@@ -35,7 +35,7 @@ CUSTOMER_NAMES = [
     "Sam Chen", "Dana Park", "Morgan Blake", "Riley Quinn",
 ]
 
-XSS_PAYLOAD = '<img src=x onerror=alert("XSS")>'
+XSS_PAYLOAD = '<script>alert("XSS")</script>'
 SQLI_PAYLOAD = "' OR 1=1--"
 CMD_INJECTION_RECEIPT = "txt;id"
 CMD_INJECTION_EXPORT = "orders.csv; cat /etc/passwd"
@@ -259,12 +259,11 @@ class CorndogUser(HttpUser):
 
     @task(2)
     def scenario_xss(self):
-        """Stored XSS via order special instructions."""
-        self.client.post(
-            "/api/orders",
-            json=_random_order_payload(special_instructions=XSS_PAYLOAD),
+        """Reflected XSS via loyalty card customer parameter."""
+        self.client.get(
+            f"/api/loyalty/card?customer={XSS_PAYLOAD}",
             headers=HEADERS,
-            name="POST /api/orders [xss]",
+            name="GET /api/loyalty/card [xss]",
         )
 
     @task(1)
