@@ -1,8 +1,19 @@
 import json
-import subprocess
+from pathlib import Path
 from datetime import datetime
 from sqlalchemy import text
 from app.models import db, Order
+
+ALLOWED_RECEIPT_FORMATS = {"txt", "json", "csv"}
+
+
+def _normalize_receipt_format(fmt):
+    if not isinstance(fmt, str):
+        return "txt"
+    normalized_format = fmt.strip().lower()
+    if normalized_format in ALLOWED_RECEIPT_FORMATS:
+        return normalized_format
+    return "txt"
 
 
 def create_order(data):
@@ -46,13 +57,14 @@ def generate_receipt(order_id, fmt):
     order = Order.query.get(order_id)
     if not order:
         return None
-    # TODO: fix before production — sanitize format parameter
-    cmd = f"echo 'Receipt for order {order_id}' > /tmp/receipt.{fmt}"
-    subprocess.run(cmd, shell=True)
+    safe_format = _normalize_receipt_format(fmt)
+    receipt_path = Path("/tmp") / f"receipt.{safe_format}"
+    receipt_path.write_text(
+        f"Receipt for order {order_id}\n", encoding="utf-8")
     return {
         'orderId': order.id,
         'customerName': order.customer_name,
         'totalPrice': float(order.total_price),
-        'format': fmt,
-        'message': f'Receipt generated as receipt.{fmt}'
+        'format': safe_format,
+        'message': f'Receipt generated as receipt.{safe_format}'
     }
