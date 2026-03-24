@@ -59,7 +59,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 
 | Service | Technology | Domain | Port | DD Service Name |
 |---|---|---|---|---|
-| corndog-web-ui | Angular 15, Nginx | Frontend SPA | 4200 | `corndog-web-ui` |
+| corndog-web-ui | Angular 15, Nginx | Frontend SPA, loyalty (auth-gated) | 4200 | `corndog-web-ui` |
 | corndog-menu | Java 17, Spring Boot 2.6.3 | Menu items | 8080 | `corndog-menu` |
 | corndog-orders | Python 3.11, Flask 2.2.2 | Orders, search, receipts | 5000 | `corndog-orders` |
 | corndog-admin | .NET 6, ASP.NET Core | Admin panel, exports | 5001 (→80) | `corndog-admin` |
@@ -217,6 +217,10 @@ open http://localhost:8180/auth/admin   # keycloak / keycloak
 | `admin` | `admin123` | `admin` | Admin panel access |
 | `user` | `user123` | `user` | Regular customer |
 | `keycloak` | `keycloak` | — | Keycloak admin console |
+
+### Loyalty Points
+
+Logged-in users (via Keycloak SSO) automatically earn loyalty points when placing orders. The cart page auto-populates the customer name from the authenticated session. After order placement, the confirmation page displays points earned, total balance, and tier (Bronze / Silver / Gold). Guest users can still place orders by entering a name manually but do not participate in the loyalty program.
 
 ## Testing Vulnerabilities
 
