@@ -32,20 +32,18 @@ export const SCENARIOS: HackerScenario[] = [
   },
   {
     id: 'xss',
-    name: 'Stored XSS',
-    description: 'Special instructions are rendered with innerHTML using a pipe that bypasses Angular sanitization.',
+    name: 'Reflected XSS',
+    description: 'The loyalty card endpoint reflects the customer query parameter directly into HTML via res.send() without escaping.',
     steps: [
-      'Add any item to the cart',
-      'In the Special Instructions field, enter the payload below',
-      'Fill in a name and place the order',
-      'The confirmation page will execute the injected script',
-      'Also visible in the Admin panel orders table'
+      'Go to the Loyalty page (log in first if needed)',
+      'Click "Try it" to inject the XSS payload into the loyalty card',
+      'The script tag is embedded directly into the HTML response without sanitization',
+      'Static Analysis detects the res.send() with unsanitized req.query input'
     ],
-    payload: '<img src=x onerror=alert("XSS")>',
-    targetRoute: '/cart',
-    targetElementId: 'specialInstructions',
-    curlCommand: `curl -X POST http://localhost:4200/api/orders -H "Content-Type: application/json" -d '{"customerName":"XSS Demo","items":[{"menu_item_id":1,"quantity":1}],"specialInstructions":"<img src=x onerror=alert(\\\"XSS\\\")>","totalPrice":4.99}'`,
-    datadogWhereToLook: 'IAST > Vulnerabilities & RUM > Sessions'
+    payload: '<script>alert("XSS")</script>',
+    targetRoute: '/loyalty',
+    curlCommand: `curl 'http://localhost:4200/api/loyalty/card?customer=%3Cscript%3Ealert(%22XSS%22)%3C%2Fscript%3E'`,
+    datadogWhereToLook: 'Code Security > Static Analysis & ASM > Signals'
   },
   {
     id: 'cmdi-receipt',

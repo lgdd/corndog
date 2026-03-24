@@ -99,6 +99,35 @@
   border-top: 1px solid var(--color-border);
 }
 
+.loyalty-summary {
+  margin-top: 24px;
+}
+
+.loyalty-summary h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 20px;
+}
+
+.loyalty-earned {
+  color: var(--color-success);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.loyalty-tier[data-tier="gold"] {
+  color: #D4A017;
+}
+
+.loyalty-tier[data-tier="silver"] {
+  color: #8A8A8A;
+}
+
+.loyalty-tier[data-tier="bronze"] {
+  color: #CD7F32;
+}
+
 .actions {
   display: flex;
   gap: 12px;

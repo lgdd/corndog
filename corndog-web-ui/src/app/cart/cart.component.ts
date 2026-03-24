@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
 import { OrderService } from '../services/order.service';
+import { LoyaltyService } from '../services/loyalty.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-cart',
@@ -19,6 +21,8 @@ export class CartComponent {
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
+    private loyaltyService: LoyaltyService,
+    public auth: AuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -27,6 +31,9 @@ export class CartComponent {
         this.specialInstructions = params['prefill-instructions'];
       }
     });
+    if (this.auth.isLoggedIn()) {
+      this.customerName = this.auth.getUsername();
+    }
   }
 
   updateQuantity(ci: CartItem, quantity: number): void {
@@ -61,7 +68,20 @@ export class CartComponent {
     }).subscribe({
       next: (order) => {
         this.cartService.clearCart();
-        this.router.navigate(['/confirmation', order.id]);
+        if (this.auth.isLoggedIn()) {
+          this.loyaltyService.earnPoints(this.customerName, total).subscribe({
+            next: (loyaltyResult) => {
+              this.router.navigate(['/confirmation', order.id], {
+                state: { loyaltyResult }
+              });
+            },
+            error: () => {
+              this.router.navigate(['/confirmation', order.id]);
+            }
+          });
+        } else {
+          this.router.navigate(['/confirmation', order.id]);
+        }
       },
       error: () => {
         this.isSubmitting = false;

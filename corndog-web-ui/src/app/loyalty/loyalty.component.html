@@ -1,0 +1,87 @@
+<div class="loyalty-page">
+  <div class="loyalty-header">
+    <h1 class="page-title">Loyalty Program</h1>
+    <span class="username-badge">{{ auth.getUsername() }}</span>
+  </div>
+
+  <div *ngIf="loading" class="empty-state">
+    <p>Loading loyalty info...</p>
+  </div>
+
+  <div *ngIf="!loading && !loyaltyInfo" class="empty-state">
+    <h3>No loyalty data yet</h3>
+    <p>Place an order to start earning points!</p>
+    <a routerLink="/menu" class="btn btn-primary" style="margin-top: 16px">Browse Menu</a>
+  </div>
+
+  <div *ngIf="loyaltyInfo" class="loyalty-content">
+    <!-- Points Summary -->
+    <div class="card points-card">
+      <h3>Your Points</h3>
+      <div class="points-display">
+        <span class="points-number">{{ loyaltyInfo.points }}</span>
+        <span class="points-label">points</span>
+      </div>
+      <div class="tier-display" [attr.data-tier]="loyaltyInfo.tier">
+        <span class="tier-badge">{{ loyaltyInfo.tier | titlecase }} Member</span>
+      </div>
+      <div class="tier-progress">
+        <div class="tier-info">
+          <span>Bronze: 0</span>
+          <span>Silver: 200</span>
+          <span>Gold: 500</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"
+               [style.width.%]="loyaltyInfo.points >= 500 ? 100 : (loyaltyInfo.points / 500) * 100">
+          </div>
+        </div>
+      </div>
+      <p class="last-updated">Last updated: {{ loyaltyInfo.updated_at | date:'medium' }}</p>
+    </div>
+
+    <!-- Loyalty Card (iframe — XSS demo surface) -->
+    <div class="card loyalty-card-section">
+      <h3>Your Loyalty Card</h3>
+      <p class="section-description">Your personalized digital loyalty card.</p>
+      <div class="card-iframe-wrapper">
+        <iframe
+          *ngIf="cardUrl"
+          [src]="cardUrl"
+          class="loyalty-card-iframe"
+          title="Loyalty Card">
+        </iframe>
+      </div>
+      <a class="btn btn-secondary btn-sm view-card-link"
+         [href]="'/api/loyalty/card?customer=' + cardCustomer"
+         target="_blank">
+        Open Card in New Tab
+      </a>
+    </div>
+
+    <!-- Redeem Points -->
+    <div class="card redeem-card">
+      <h3>Redeem Points</h3>
+      <p class="section-description">Use your points for rewards. 100 points = $1 off your next order.</p>
+      <div class="redeem-controls">
+        <input
+          type="number"
+          [(ngModel)]="redeemAmount"
+          placeholder="Points to redeem"
+          min="1"
+          [max]="loyaltyInfo.points">
+        <button class="btn btn-primary"
+                (click)="redeemPoints()"
+                [disabled]="!redeemAmount || redeemAmount <= 0 || redeemAmount > loyaltyInfo.points">
+          Redeem
+        </button>
+      </div>
+      <div class="redeem-message"
+           *ngIf="redeemMessage"
+           [class.error]="redeemError"
+           [class.success]="!redeemError">
+        {{ redeemMessage }}
+      </div>
+    </div>
+  </div>
+</div>

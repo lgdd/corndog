@@ -42,8 +42,7 @@
 
       <div class="special-instructions" *ngIf="order.specialInstructions">
         <h4>Special Instructions</h4>
-        <!-- TODO: fix before production — renders user input as raw HTML (XSS vulnerability) -->
-        <div class="instructions-content" [innerHTML]="order.specialInstructions | safeHtml"></div>
+        <div class="instructions-content">{{ order.specialInstructions }}</div>
       </div>
 
       <div class="receipt-section">
@@ -51,6 +50,28 @@
           Download Receipt
         </a>
       </div>
+    </div>
+
+    <div class="card loyalty-summary" *ngIf="loyaltyResult">
+      <h3>Loyalty Points</h3>
+      <div class="detail-row">
+        <span class="detail-label">Points Earned</span>
+        <span class="detail-value loyalty-earned">+{{ loyaltyResult.points_earned }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Points</span>
+        <span class="detail-value">{{ loyaltyResult.points }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Tier</span>
+        <span class="detail-value loyalty-tier" [attr.data-tier]="loyaltyResult.tier">
+          {{ loyaltyResult.tier | titlecase }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card loyalty-summary" *ngIf="loyaltyLoading">
+      <p>Loading loyalty info...</p>
     </div>
 
     <div class="actions">

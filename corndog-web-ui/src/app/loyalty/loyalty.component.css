@@ -1,0 +1,192 @@
+.loyalty-page {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loyalty-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.username-badge {
+  background: var(--color-primary);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.loyalty-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Points Card */
+.points-card h3,
+.loyalty-card-section h3,
+.redeem-card h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 16px;
+}
+
+.points-display {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.points-number {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.points-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.tier-display {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tier-display[data-tier="gold"] .tier-badge {
+  background: #FFF8E1;
+  color: #D4A017;
+}
+
+.tier-display[data-tier="silver"] .tier-badge {
+  background: #F0F0F0;
+  color: #666;
+}
+
+.tier-display[data-tier="bronze"] .tier-badge {
+  background: #FBE9E0;
+  color: #CD7F32;
+}
+
+.tier-progress {
+  margin-bottom: 12px;
+}
+
+.tier-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #CD7F32, #C0C0C0, #D4A017);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.last-updated {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  text-align: right;
+  margin-top: 8px;
+}
+
+/* Loyalty Card iframe */
+.section-description {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.card-iframe-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.loyalty-card-iframe {
+  width: 100%;
+  height: 260px;
+  border: none;
+  display: block;
+}
+
+.view-card-link {
+  font-size: 0.85rem;
+  padding: 6px 14px;
+}
+
+/* Redeem Section */
+.redeem-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.redeem-controls input {
+  flex: 1;
+}
+
+.redeem-controls .btn {
+  white-space: nowrap;
+}
+
+.redeem-message {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.redeem-message.success {
+  background: #D4EDDA;
+  color: #155724;
+}
+
+.redeem-message.error {
+  background: #F8D7DA;
+  color: #721C24;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state h3 {
+  font-family: var(--font-display);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--color-text-light);
+}

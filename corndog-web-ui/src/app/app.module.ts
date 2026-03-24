@@ -10,7 +10,7 @@ import { CartComponent } from './cart/cart.component';
 import { ConfirmationComponent } from './confirmation/confirmation.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { AdminComponent } from './admin/admin.component';
-import { SafeHtmlPipe } from './shared/safe-html.pipe';
+import { LoyaltyComponent } from './loyalty/loyalty.component';
 import { HackerFabComponent } from './shared/hacker-fab/hacker-fab.component';
 import { HackerPanelComponent } from './shared/hacker-panel/hacker-panel.component';
 import { HackerHighlightDirective } from './shared/hacker-highlight.directive';
@@ -33,7 +33,7 @@ function initializeKeycloak(auth: AuthService) {
     ConfirmationComponent,
     OrderHistoryComponent,
     AdminComponent,
-    SafeHtmlPipe,
+    LoyaltyComponent,
     HackerFabComponent,
     HackerPanelComponent,
     HackerHighlightDirective

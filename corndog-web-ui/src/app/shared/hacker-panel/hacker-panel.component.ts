@@ -34,7 +34,7 @@ export class HackerPanelComponent {
     if (scenario.id === 'sqli' && scenario.payload) {
       queryParams['prefill'] = scenario.payload;
     } else if (scenario.id === 'xss' && scenario.payload) {
-      queryParams['prefill-instructions'] = scenario.payload;
+      queryParams['prefill-xss'] = scenario.payload;
     } else if (scenario.id === 'cmdi-export' && scenario.payload) {
       queryParams['prefill-filename'] = scenario.payload;
     }

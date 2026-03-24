@@ -47,8 +47,7 @@
               {{ item.name }} (x{{ item.quantity }}){{ last ? '' : ', ' }}
             </span>
           </td>
-          <!-- TODO: fix before production — renders user input as raw HTML (XSS vulnerability) -->
-          <td [innerHTML]="order.specialInstructions | safeHtml"></td>
+          <td>{{ order.specialInstructions }}</td>
           <td class="total-cell">{{ order.totalPrice | currency }}</td>
           <td class="date-cell">{{ order.createdAt | date:'short' }}</td>
         </tr>

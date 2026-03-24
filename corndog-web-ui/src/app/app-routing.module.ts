@@ -5,6 +5,7 @@ import { CartComponent } from './cart/cart.component';
 import { ConfirmationComponent } from './confirmation/confirmation.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { AdminComponent } from './admin/admin.component';
+import { LoyaltyComponent } from './loyalty/loyalty.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
@@ -13,6 +14,7 @@ const routes: Routes = [
   { path: 'cart', component: CartComponent },
   { path: 'confirmation/:id', component: ConfirmationComponent },
   { path: 'order-history', component: OrderHistoryComponent },
+  { path: 'loyalty', component: LoyaltyComponent, canActivate: [AuthGuard] },
   { path: 'admin', component: AdminComponent, canActivate: [AuthGuard] }
 ];
 

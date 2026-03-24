@@ -12,6 +12,7 @@
         <span class="cart-badge" *ngIf="(cartCount$ | async) as count">{{ count }}</span>
       </a>
       <a routerLink="/order-history" routerLinkActive="active">Orders</a>
+      <a routerLink="/loyalty" routerLinkActive="active" *ngIf="auth.isLoggedIn()">Loyalty</a>
       <a routerLink="/admin" routerLinkActive="active" class="admin-link">Admin</a>
       <span class="auth-controls" *ngIf="auth.isLoggedIn(); else loginBtn">
         <span class="username">{{ auth.getUsername() }}</span>

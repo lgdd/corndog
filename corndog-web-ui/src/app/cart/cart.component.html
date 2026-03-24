@@ -32,17 +32,24 @@
         <h3>Checkout</h3>
         <div class="form-group">
           <label for="customerName">Your Name</label>
-          <input
-            id="customerName"
-            type="text"
-            [(ngModel)]="customerName"
-            placeholder="Enter your name">
+          <div *ngIf="auth.isLoggedIn(); else guestNameInput" class="logged-in-name">
+            Ordering as <strong>{{ customerName }}</strong>
+          </div>
+          <ng-template #guestNameInput>
+            <input
+              id="customerName"
+              type="text"
+              [(ngModel)]="customerName"
+              placeholder="Enter your name">
+            <p class="loyalty-hint">
+              <a href="javascript:void(0)" (click)="auth.login()">Log in</a> to earn loyalty points
+            </p>
+          </ng-template>
         </div>
         <div class="form-group">
           <label for="specialInstructions">Special Instructions</label>
           <textarea
             id="specialInstructions"
-            appHackerHighlight="xss"
             [(ngModel)]="specialInstructions"
             placeholder="Any special requests? Extra mustard, no ketchup, etc."
             rows="3"></textarea>
