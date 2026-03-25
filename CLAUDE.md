@@ -45,16 +45,27 @@ make mk-tunnel         # Start minikube tunnel (for ingress on macOS)
 
 K8s manifests live in `k8s/`. Can run in parallel with Docker Compose (no port conflicts). Images are built directly in minikube's Docker daemon via `eval $(minikube docker-env)` — no registry needed. DB init.sql, Keycloak realm, and locustfile are loaded as ConfigMaps at deploy time. The Datadog Agent DaemonSet in `k8s/datadog-agent-daemonset.yaml` provides APM/logs collection; if one already exists on the cluster, the DaemonSet may stay Pending (services still route to the existing agent via `status.hostIP`).
 
-### EC2 Deploy (Terraform)
+### EC2 Deploy — Docker Compose (Terraform)
 ```bash
-make tf-init     # Initialize Terraform
-make tf-plan     # Preview infrastructure changes
-make tf-apply    # Deploy the stack to EC2
-make tf-destroy  # Tear down the EC2 stack
-make tf-output   # Show outputs (IP, URL, SSM command)
+make tf-docker-init     # Initialize Terraform
+make tf-docker-plan     # Preview infrastructure changes
+make tf-docker-apply    # Deploy Docker Compose stack to EC2
+make tf-docker-destroy  # Tear down the EC2 stack
+make tf-docker-output   # Show outputs (IP, URL, SSM command)
 ```
 
-Terraform config lives in `terraform/`. It provisions an Amazon Linux 2023 EC2 instance (default `t3.xlarge` in `eu-north-1`), installs Docker, clones the repo, and runs `docker compose up`. Ingress is auto-restricted to the deployer's public IP via `checkip.amazonaws.com`. SSM Session Manager access is included. Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and set `dd_api_key` and `repo_url` before applying.
+Terraform config lives in `terraform/ec2/docker/`. Provisions an Amazon Linux 2023 EC2 instance (default `t3.xlarge` in `eu-north-1`), installs Docker, clones the repo, and runs `docker compose up`. Web UI on port 4200. Ingress is auto-restricted to the deployer's public IP via `checkip.amazonaws.com`. SSM Session Manager access is included. Copy `terraform/ec2/docker/terraform.tfvars.example` to `terraform/ec2/docker/terraform.tfvars` and set `dd_api_key` and `repo_url` before applying. The legacy `tf-*` targets (without `docker`/`k8s` prefix) are aliases to `tf-docker-*`.
+
+### EC2 Deploy — Kubernetes (Terraform)
+```bash
+make tf-k8s-init     # Initialize Terraform
+make tf-k8s-plan     # Preview infrastructure changes
+make tf-k8s-apply    # Deploy K8s stack to EC2 via Minikube
+make tf-k8s-destroy  # Tear down the EC2 stack
+make tf-k8s-output   # Show outputs (IP, URL, SSM command)
+```
+
+Terraform config lives in `terraform/ec2/k8s/`. Provisions an Amazon Linux 2023 EC2 instance (default `t3.2xlarge` in `eu-north-1`), installs Docker, Minikube, kubectl, and Helm, then builds images and deploys the K8s manifests from `k8s/`. Web UI on port 9080 via `kubectl port-forward` running as a systemd service. Reuses the same `k8s/` manifests as the local minikube workflow. Copy `terraform/ec2/k8s/terraform.tfvars.example` to `terraform/ec2/k8s/terraform.tfvars` and set `dd_api_key` before applying. Optionally set `openai_api_key` for LLM suggestions.
 
 ### Individual Service Development
 ```bash
