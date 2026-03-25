@@ -3,6 +3,21 @@ import Keycloak from 'keycloak-js';
 import { environment } from '../../environments/environment';
 import { RumService } from './rum.service';
 
+// keycloak-js 26.x requires crypto.randomUUID() for state/nonce generation
+// and crypto.subtle for PKCE. Both are unavailable in insecure contexts
+// (plain HTTP to a non-localhost host, e.g. EC2 via IP). Polyfill
+// randomUUID so Keycloak login works over HTTP for demo purposes.
+if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'undefined') {
+  crypto.randomUUID = () => {
+    const bytes = new Uint8Array(16);
+    (crypto.getRandomValues || ((b: Uint8Array) => b.map(() => Math.random() * 256 | 0)))(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const h = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}` as `${string}-${string}-${string}-${string}-${string}`;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private keycloak: Keycloak;
@@ -16,9 +31,6 @@ export class AuthService {
   }
 
   init(): Promise<boolean> {
-    // PKCE (S256) and silent-check-sso require the Web Crypto API, which is
-    // only available in secure contexts (HTTPS). Disable both over plain HTTP
-    // so Keycloak auth still works for the demo.
     const isSecure = window.isSecureContext;
     return this.keycloak.init({
       onLoad: 'check-sso',
