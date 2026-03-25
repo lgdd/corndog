@@ -1,0 +1,24 @@
+# Copy to terraform.tfvars and fill in values
+dd_api_key = ""
+dd_site    = "datadoghq.com"
+dd_env     = "corndog-260318"
+
+aws_region    = "eu-north-1"
+instance_type = "t3.2xlarge"
+
+# SSH key pair name (optional — SSM access works without it)
+# ssh_key_name = "my-keypair"
+
+# GitHub token for private repo access (optional — leave empty for public repos)
+# github_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Git clone URL for this repo
+repo_url    = "https://github.com/lgdd/corndog.git"
+repo_branch = "main"
+
+# Datadog RUM (optional — leave empty to disable RUM)
+# dd_application_id = ""
+# dd_client_token   = ""
+
+# OpenAI API key for LLM suggestions (optional — falls back to hardcoded suggestions)
+# openai_api_key = "sk-..."
