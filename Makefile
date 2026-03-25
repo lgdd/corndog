@@ -3,6 +3,8 @@ SHELL := /bin/bash
 export
 
 .PHONY: build up down restart logs ps clean health smoke traffic-up traffic-down \
+       tf-docker-init tf-docker-plan tf-docker-apply tf-docker-destroy tf-docker-output \
+       tf-k8s-init tf-k8s-plan tf-k8s-apply tf-k8s-destroy tf-k8s-output \
        tf-init tf-plan tf-apply tf-destroy tf-output demo \
        mk-start mk-build mk-up mk-down mk-restart mk-status mk-logs mk-health mk-smoke mk-tunnel mk-port-forward
 
@@ -89,28 +91,69 @@ demo-%:           ## Run a single scenario (e.g. make demo-sql-injection, make d
 clean:            ## Remove everything: containers, volumes, images
 	$(COMPOSE) down -v --rmi local
 
-## —— Terraform (EC2 deploy) ————————————————————————————————
+## —— Terraform: Docker Compose on EC2 ——————————————————————
 
-TF_DIR = terraform
+TF_DOCKER_DIR = terraform/ec2/docker
 
-tf-init:          ## Initialize Terraform
-	terraform -chdir=$(TF_DIR) init
+tf-docker-init:    ## Initialize Terraform (Docker Compose variant)
+	terraform -chdir=$(TF_DOCKER_DIR) init
 
-tf-plan:          ## Preview infrastructure changes
-	terraform -chdir=$(TF_DIR) plan
+tf-docker-plan:    ## Preview infrastructure changes (Docker Compose variant)
+	terraform -chdir=$(TF_DOCKER_DIR) plan
 
-tf-apply:         ## Deploy the stack to EC2
-	terraform -chdir=$(TF_DIR) apply -auto-approve \
+tf-docker-apply:   ## Deploy Docker Compose stack to EC2
+	terraform -chdir=$(TF_DOCKER_DIR) apply -auto-approve \
 	  -var ssh_key_name=$(SSH_KEY_NAME) \
-	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),)
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),) \
+	  $(if $(DD_APPLICATION_ID),-var dd_application_id=$(DD_APPLICATION_ID),) \
+	  $(if $(DD_CLIENT_TOKEN),-var dd_client_token=$(DD_CLIENT_TOKEN),)
 
-tf-destroy:       ## Tear down the EC2 stack
-	terraform -chdir=$(TF_DIR) destroy -auto-approve \
+tf-docker-destroy: ## Tear down Docker Compose EC2 stack
+	terraform -chdir=$(TF_DOCKER_DIR) destroy -auto-approve \
 	  -var ssh_key_name=$(SSH_KEY_NAME) \
-	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),)
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),) \
+	  $(if $(DD_APPLICATION_ID),-var dd_application_id=$(DD_APPLICATION_ID),) \
+	  $(if $(DD_CLIENT_TOKEN),-var dd_client_token=$(DD_CLIENT_TOKEN),)
 
-tf-output:        ## Show Terraform outputs (IP, URL, SSM command)
-	terraform -chdir=$(TF_DIR) output
+tf-docker-output:  ## Show Terraform outputs (Docker Compose variant)
+	terraform -chdir=$(TF_DOCKER_DIR) output
+
+## —— Terraform: Kubernetes (Minikube) on EC2 ——————————————
+
+TF_K8S_DIR = terraform/ec2/k8s
+
+tf-k8s-init:       ## Initialize Terraform (K8s variant)
+	terraform -chdir=$(TF_K8S_DIR) init
+
+tf-k8s-plan:       ## Preview infrastructure changes (K8s variant)
+	terraform -chdir=$(TF_K8S_DIR) plan
+
+tf-k8s-apply:      ## Deploy K8s stack to EC2 via Minikube
+	terraform -chdir=$(TF_K8S_DIR) apply -auto-approve \
+	  -var ssh_key_name=$(SSH_KEY_NAME) \
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),) \
+	  $(if $(DD_APPLICATION_ID),-var dd_application_id=$(DD_APPLICATION_ID),) \
+	  $(if $(DD_CLIENT_TOKEN),-var dd_client_token=$(DD_CLIENT_TOKEN),) \
+	  $(if $(OPENAI_API_KEY),-var openai_api_key=$(OPENAI_API_KEY),)
+
+tf-k8s-destroy:    ## Tear down K8s EC2 stack
+	terraform -chdir=$(TF_K8S_DIR) destroy -auto-approve \
+	  -var ssh_key_name=$(SSH_KEY_NAME) \
+	  $(if $(GITHUB_TOKEN),-var github_token=$(GITHUB_TOKEN),) \
+	  $(if $(DD_APPLICATION_ID),-var dd_application_id=$(DD_APPLICATION_ID),) \
+	  $(if $(DD_CLIENT_TOKEN),-var dd_client_token=$(DD_CLIENT_TOKEN),) \
+	  $(if $(OPENAI_API_KEY),-var openai_api_key=$(OPENAI_API_KEY),)
+
+tf-k8s-output:     ## Show Terraform outputs (K8s variant)
+	terraform -chdir=$(TF_K8S_DIR) output
+
+## —— Terraform: backward-compatible aliases ————————————————
+
+tf-init:    tf-docker-init       ## (alias) Initialize Terraform
+tf-plan:    tf-docker-plan       ## (alias) Preview infrastructure changes
+tf-apply:   tf-docker-apply      ## (alias) Deploy stack to EC2
+tf-destroy: tf-docker-destroy    ## (alias) Tear down EC2 stack
+tf-output:  tf-docker-output     ## (alias) Show Terraform outputs
 
 ## —— Minikube (K8s) ————————————————————————————————————————
 
