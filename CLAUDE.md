@@ -27,6 +27,24 @@ make demo-sql-injection  # Run a single scenario (any script name works)
 make help        # Show all Makefile targets
 ```
 
+### Minikube (K8s)
+```bash
+make mk-start          # Start minikube and enable ingress addon
+make mk-build          # Build service images inside minikube's Docker daemon
+make mk-up             # Deploy the full stack to minikube
+make mk-down           # Tear down the minikube deployment
+make mk-restart        # Rebuild images and redeploy to minikube
+make mk-status         # Show all K8s resources in the corndog namespace
+make mk-logs           # Tail logs for all pods
+make mk-logs-corndog-orders  # Tail logs for one service
+make mk-port-forward   # Port-forward web-ui to localhost:9080
+make mk-health         # Health-check all services (run mk-port-forward first)
+make mk-smoke          # Run smoke tests (run mk-port-forward first)
+make mk-tunnel         # Start minikube tunnel (for ingress on macOS)
+```
+
+K8s manifests live in `k8s/`. Can run in parallel with Docker Compose (no port conflicts). Images are built directly in minikube's Docker daemon via `eval $(minikube docker-env)` — no registry needed. DB init.sql, Keycloak realm, and locustfile are loaded as ConfigMaps at deploy time. The Datadog Agent DaemonSet in `k8s/datadog-agent-daemonset.yaml` provides APM/logs collection; if one already exists on the cluster, the DaemonSet may stay Pending (services still route to the existing agent via `status.hostIP`).
+
 ### EC2 Deploy (Terraform)
 ```bash
 make tf-init     # Initialize Terraform
@@ -58,7 +76,7 @@ cd corndog-web-ui && npx ng build --configuration production
 ```
 
 ### Prerequisites
-`DD_API_KEY` and `DD_SITE` must be set. For RUM, also set `DD_APPLICATION_ID` and `DD_CLIENT_TOKEN`. Generate `.env` via: `envsubst < .env.example > .env`
+`DD_API_KEY` and `DD_SITE` must be set. For RUM, also set `DD_APPLICATION_ID` and `DD_CLIENT_TOKEN`. For real LLM suggestions (optional), set `OPENAI_API_KEY`. Generate `.env` via: `envsubst < .env.example > .env`
 
 ## Architecture
 
@@ -69,6 +87,7 @@ Five backend services share a single PostgreSQL database (`corndog`), fronted by
 - **corndog-orders** (Flask / Python 3.11, :5000) — Order placement, search, receipts. SQLAlchemy with `orders` table. Flask app factory in `app/main.py`, routes in `app/routes/orders.py`. Run via `ddtrace-run gunicorn`.
 - **corndog-admin** (.NET 6 / ASP.NET Core, :5001→80) — Admin order list and export. EF Core with Npgsql. Controller at `src/Controllers/AdminController.cs`, service at `src/Services/OrderService.cs`.
 - **corndog-loyalty** (Express / Node.js 18, :3000) — Loyalty points service. Customers earn/redeem points per order. Uses `AsyncLocalStorage` for request-scoped context. Entry point: `server.js`, routes in `routes/loyalty.js`, DB queries in `services/points-service.js`. The `/api/loyalty/card` endpoint reflects the `customer` query parameter directly into HTML via `res.send()` — intentionally vulnerable to reflected XSS for Static Analysis demo. Runs on a vulnerable Node 18 runtime to demo CVE-2025-59466. `restart: on-failure` so it recovers from DoS crashes.
+- **corndog-suggestions** (Flask / Python 3.11, :5002) — AI-powered menu pairing suggestions. Uses `litellm` to call LLM APIs for "you might also like" recommendations. Entry point: `app/main.py`, routes in `app/routes/suggestions.py`. Falls back to hardcoded suggestions when no LLM API key is configured. Pinned to compromised `litellm==1.82.7` (TeamPCP CanisterWorm supply chain attack) for SCA demo. LLM Observability enabled via `DD_LLMOBS_ENABLED` — ddtrace auto-instruments litellm calls.
 - **corndog-db** (PostgreSQL 14, :5432) — Shared database. Schema in `db/init.sql`. Tables: `menu_items`, `orders` (JSONB items column), `loyalty_points`. Datadog DBM enabled via `pg_stat_statements`.
 - **corndog-auth** (Keycloak 26.2.3, :8180→8080) — OIDC identity provider for SSO. Pre-configured `corndog` realm with `corndog-web` public client and two users (`admin`/`admin123`, `user`/`user123`). Auth events sent as JSON syslog to the Agent on port 5140 for Cloud SIEM ingestion; console logs are excluded from Docker log collection. Nginx proxies `/auth/` to Keycloak. The Angular frontend gates the admin route behind Keycloak login, but backend APIs do not validate tokens (broken auth preserved). Keycloak generates LOGIN, LOGIN_ERROR, and admin events that surface as Cloud SIEM detection signals. Realm config in `corndog-auth/corndog-realm.json`. Agent syslog listener config in `datadog-agent/keycloak.d/conf.yaml`.
 - **corndog-traffic** (Locust, headless) — Continuous traffic generator. Runs golden-path requests and security attack scenarios (SQLi, XSS, command injection, Text4Shell, Keycloak login/failed-login/brute-force) through Nginx to produce realistic distributed traces, ASM signals, and SIEM auth events. Config in `traffic/locustfile.py`. Tunable via `TRAFFIC_RATE` (default 10 users), `TRAFFIC_DURATION` (default unlimited), `TRAFFIC_LATENCY_MS`. Includes a `BurstUser` that creates periodic menu request spikes. Excluded from Datadog telemetry via log exclusion label.
@@ -89,6 +108,7 @@ The vulnerabilities are the point of the demo — do not "fix" them unless expli
 7. **DoS via Nested JSON (CVE-2025-59466)** in `corndog-loyalty/routes/loyalty.js` — recursive `countDepth()` on deeply nested JSON triggers stack overflow; with `AsyncLocalStorage` active, the `try/catch` is bypassed and the process crashes
 8. **Text4Shell (CVE-2022-42889)** in `corndog-menu/src/main/java/com/corndog/service/MenuService.java` — user-controlled `template` parameter passed to `StringSubstitutor.replace()` from vulnerable `commons-text:1.9`; IAST detects the tainted data flow through the CVE-affected library at runtime
 9. **Leaked Secrets** — fake but realistic secrets scattered across the codebase to trigger Datadog Secrets Scanning: AWS keys, GitHub PAT, and Twilio auth token in `corndog-orders/app/config.py`, Stripe and SendGrid keys in `corndog-admin/src/appsettings.json`, SendGrid SMTP password in `corndog-menu` `application.yml`, Google Maps API key in `corndog-web-ui` environment files
+10. **Supply Chain Compromise (litellm 1.82.7)** in `corndog-suggestions/requirements.txt` — pinned to version compromised by TeamPCP CanisterWorm campaign; Datadog SCA detects the malicious package advisory. LLM Observability shows litellm.completion() call traces.
 
 ## Cursor Rules
 

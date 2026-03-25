@@ -16,6 +16,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 | **Workload Protection** | Runtime security (CWS) on containers |
 | **Real User Monitoring** | Browser SDK on Angular SPA — sessions, errors, resources, Session Replay |
 | **Cloud SIEM** | Keycloak auth events via syslog — login, failed login, brute force detection |
+| **LLM Observability** | Auto-instrumented litellm calls — prompts, completions, latency, token usage |
 
 ## Architecture
 
@@ -32,28 +33,28 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
                               |     Nginx     |
                               +-------+-------+
                                       |
-       +-------------------+---------+---------+-------------------+
-       |                   |                   |                   |
-       | :8080/api/menu    | :5000/api/orders  | :3000/api/loyalty | :5001/api/admin
-       |                   |                   |                   |
-+------+------+     +------+------+     +------+------+     +------+------+
-|    menu     |     |   orders    |     |   loyalty   |     |    admin    |
-| Spring Boot |     |    Flask    |     |   Express   |     |   ASP.NET   |
-+------+------+     +------+------+     +------+------+     +------+------+
-       |                   |                   |                   |
-       +---------+---------+-------------------+---------+---------+
-                 |                                       |
-                 | :5432                                 | :8126
-                 |                                       |
-          +------+------+                         +------+------+
-          |     db      |                         |  dd-agent   |
-          | PostgreSQL  |                         |   Datadog   |
-          +------+------+                         +------+------+
-                 |                                       |
-                 +----------------- DBM -----------------+
+       +------------+--------+--------+--------+------------+
+       |            |        |        |        |            |
+       | /menu      | /orders| /admin | /loyalty| /suggestions
+       |            |        |        |        |            |
+  +----+----+ +-----+-----+ +---+---+ +---+---+ +-----+-----+
+  |  menu   | |  orders   | | admin | |loyalty| |suggestions|
+  |  Spring | |   Flask   | |ASP.NET| |Express| |   Flask   |
+  +----+----+ +-----+-----+ +---+---+ +---+---+ +-----+-----+
+       |            |              |        |          |
+       +------+-----+--------------+--------+----------+
+              |                                        |
+              | :5432                                   | :8126
+              |                                        |
+       +------+------+                         +------+------+
+       |     db      |                         |  dd-agent   |
+       | PostgreSQL  |                         |   Datadog   |
+       +------+------+                         +------+------+
+              |                                        |
+              +----------------- DBM ------------------+
 ```
 
-Each backend owns a distinct domain — menu, orders, admin, or loyalty — and all share a single PostgreSQL database.
+Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggestions — and all share a single PostgreSQL database.
 
 ## Services
 
@@ -64,6 +65,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | corndog-orders | Python 3.11, Flask 2.2.2 | Orders, search, receipts | 5000 | `corndog-orders` |
 | corndog-admin | .NET 6, ASP.NET Core | Admin panel, exports | 5001 (→80) | `corndog-admin` |
 | corndog-loyalty | Node.js 18, Express 4.18.2 | Loyalty points | 3000 | `corndog-loyalty` |
+| corndog-suggestions | Python 3.11, Flask, litellm | AI menu suggestions (LLM Obs) | 5002 | `corndog-suggestions` |
 | corndog-db | PostgreSQL 14 | Database (DBM enabled) | 5432 | `corndog-db` |
 | corndog-auth | Keycloak 26.2.3 | SSO / OIDC identity provider | 8180 (→8080) | `corndog-auth` |
 | corndog-traffic | Locust (headless) | Synthetic traffic generator | — | — (excluded) |
@@ -86,6 +88,8 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | `POST` | `/api/loyalty/earn` | corndog-loyalty | Earn points for an order |
 | `POST` | `/api/loyalty/redeem` | corndog-loyalty | Redeem loyalty points |
 | `POST` | `/api/loyalty/validate-config` | corndog-loyalty | Validate config (vulnerable) |
+| `GET` | `/api/suggestions?item=` | corndog-suggestions | AI-powered menu pairing suggestions |
+| `GET` | `/api/suggestions/health` | corndog-suggestions | Health check |
 | `POST` | `/auth/realms/corndog/protocol/openid-connect/token` | corndog-auth | OIDC token endpoint |
 
 ## Intentional Vulnerabilities
@@ -102,6 +106,7 @@ Each backend owns a distinct domain — menu, orders, admin, or loyalty — and 
 | 6 | Vulnerable Deps | all backends | — | Known CVEs in pinned dependency versions |
 | 7 | DoS via Nested JSON (CVE-2025-59466) | corndog-loyalty | `POST /api/loyalty/validate-config` | Recursive depth counting + `AsyncLocalStorage` makes stack overflow unrecoverable |
 | 8 | Text4Shell (CVE-2022-42889) | corndog-menu | `GET /api/menu/{id}/formatted?template=` | User-controlled template passed to `StringSubstitutor` from vulnerable `commons-text:1.9` |
+| 9 | Supply Chain (litellm) | corndog-suggestions | — | litellm pinned to compromised version (TeamPCP CanisterWorm); SCA detects advisory |
 
 ## Demo Scenarios — Failure Paths
 
@@ -124,6 +129,7 @@ BASE_URL=http://1.2.3.4:4200 make demo-sql-injection  # Against a remote deploy
 | `make demo-dos-nested-json` | DoS via ~15k-deep nested JSON (CVE-2025-59466) | Security Research Feed "Impacted" + service crash |
 | `make demo-broken-auth` | Unauthenticated admin API access | ASM broken-auth finding |
 | `make demo-keycloak-failed-login` | Burst of failed Keycloak logins | Cloud SIEM brute-force / credential-stuffing |
+| `make demo-supply-chain-litellm` | Calls AI suggestions endpoint (exercises compromised litellm) | SCA library advisory + LLM Obs traces |
 
 Additional observability scenarios (not scripted — produced by traffic generator or manual UI interaction):
 
@@ -164,6 +170,7 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `keycloak_login` | 2 | `POST /auth/.../token` | Successful OIDC login (SIEM signal) |
 | `keycloak_failed_login` | 2 | `POST /auth/.../token` | Failed login with wrong password (SIEM signal) |
 | `keycloak_brute_force` | 1 | `POST /auth/.../token` | Burst of 5-10 failed logins (SIEM signal) |
+| `suggest_pairing` | 2 | `GET /api/suggestions` | AI menu pairing suggestion (exercises litellm) |
 | `burst_or_idle` | — | `GET /api/menu` | Periodic 30s burst spike every ~5 min |
 
 ### Configuration
@@ -222,6 +229,23 @@ open http://localhost:8180/auth/admin   # keycloak / keycloak
 
 Logged-in users (via Keycloak SSO) automatically earn loyalty points when placing orders. The cart page auto-populates the customer name from the authenticated session. After order placement, the confirmation page displays points earned, total balance, and tier (Bronze / Silver / Gold). Guest users can still place orders by entering a name manually but do not participate in the loyalty program.
 
+### Minikube (K8s)
+
+Deploy the full stack to a local Kubernetes cluster:
+
+```bash
+make mk-start          # Start minikube + enable ingress
+make mk-build          # Build images inside minikube's Docker
+make mk-up             # Deploy namespace, ConfigMaps, secrets, Helm agent, manifests
+make mk-down           # Tear down everything
+make mk-status         # Show all K8s resources
+make mk-port-forward   # Port-forward web-ui to localhost:9080
+make mk-health         # Health-check all services (needs mk-port-forward)
+make mk-smoke          # Smoke tests (needs mk-port-forward)
+```
+
+Docker Compose and minikube can run in parallel — no port conflicts.
+
 ## Testing Vulnerabilities
 
 ### SQL Injection (corndog-orders)
@@ -267,6 +291,13 @@ print(json.dumps(obj))
   -d @-
 ```
 
+### Supply Chain — litellm (corndog-suggestions)
+```bash
+curl "http://localhost:5002/api/suggestions?item=Classic+Corndog"
+# Check Datadog Code Security > SCA for litellm advisory
+# Check LLM Observability for litellm.completion() traces
+```
+
 ## Unit Tests & Flaky Test Demo
 
 The `corndog-menu` Java service includes JUnit 5 unit tests — a mix of stable tests and **intentionally flaky tests** designed to demonstrate [Datadog Test Visibility](https://docs.datadoghq.com/tests/) flaky test detection.
@@ -307,6 +338,7 @@ corndog/
 ├── corndog-orders/         → Python 3.11, Flask 2.2.2 (ddtrace)
 ├── corndog-admin/          → .NET 6, ASP.NET Core (dd-trace-dotnet)
 ├── corndog-loyalty/        → Node.js 18, Express 4.18.2 (dd-trace)
+├── corndog-suggestions/    → Python 3.11, Flask, litellm (ddtrace + LLM Obs)
 ├── corndog-auth/            → Keycloak realm config (corndog-realm.json)
 ├── scripts/                → One-click demo scenario scripts (make demo-*)
 ├── traffic/                → Locust traffic generator (excluded from DD)
@@ -332,3 +364,6 @@ corndog/
 | `POSTGRES_DB` | Database name | `corndog` |
 | `POSTGRES_USER` | Database user | `corndog` |
 | `POSTGRES_PASSWORD` | Database password | `corndog123` |
+| `OPENAI_API_KEY` | OpenAI API key for real LLM suggestions | — (optional) |
+| `DD_LLMOBS_ENABLED` | LLM Observability | `1` (on corndog-suggestions) |
+| `DD_LLMOBS_ML_APP` | LLM Obs application name | `corndog-suggestions` |
