@@ -42,3 +42,11 @@ spec:
               value: "1.0.0"
             - name: DD_APPSEC_ENABLED
               value: "true"
+            - name: DD_IAST_ENABLED
+              value: "true"
+            - name: DD_APPSEC_SCA_ENABLED
+              value: "true"
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_CODE_ORIGIN_FOR_SPANS_ENABLED
+              value: "true"

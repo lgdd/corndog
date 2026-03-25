@@ -39,9 +39,20 @@ spec:
                 configMapKeyRef:
                   name: corndog-config
                   key: POSTGRES_PASSWORD
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "corndog"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
       volumes:
         - name: postgres-data
           emptyDir: {}
+        - name: init-sql
+          configMap:
+            name: corndog-db-init

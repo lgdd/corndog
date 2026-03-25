@@ -24,3 +24,14 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          env:
+            - name: DD_APPLICATION_ID
+              value: ""
+            - name: DD_CLIENT_TOKEN
+              value: ""
+            - name: DD_SITE
+              value: ""
+            - name: DD_ENV
+              value: demo
+            - name: DD_VERSION
+              value: "1.0.0"

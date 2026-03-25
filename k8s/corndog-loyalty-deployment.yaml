@@ -1,51 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: corndog-menu
+  name: corndog-loyalty
   namespace: corndog
   labels:
     app: corndog
-    component: corndog-menu
+    component: corndog-loyalty
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: corndog
-      component: corndog-menu
+      component: corndog-loyalty
   template:
     metadata:
       labels:
         app: corndog
-        component: corndog-menu
+        component: corndog-loyalty
     spec:
       containers:
-        - name: corndog-menu
-          image: corndog/corndog-menu:latest
+        - name: corndog-loyalty
+          image: corndog/corndog-loyalty:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 3000
           env:
-            - name: SPRING_DATASOURCE_URL
+            - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
                   name: corndog-config
-                  key: SPRING_DATASOURCE_URL
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: corndog-config
-                  key: SPRING_DATASOURCE_USERNAME
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  name: corndog-config
-                  key: SPRING_DATASOURCE_PASSWORD
+                  key: DATABASE_URL
             - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
             - name: DD_SERVICE
-              value: corndog-menu
+              value: corndog-loyalty
             - name: DD_ENV
               value: demo
             - name: DD_VERSION

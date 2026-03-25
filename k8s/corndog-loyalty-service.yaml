@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: corndog-loyalty
+  namespace: corndog
+  labels:
+    app: corndog
+    component: corndog-loyalty
+spec:
+  type: ClusterIP
+  selector:
+    app: corndog
+    component: corndog-loyalty
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP

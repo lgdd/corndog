@@ -1,0 +1,14 @@
+# Datadog Agent is deployed via Helm chart in the corndog namespace.
+#
+# Install:
+#   helm repo add datadog https://helm.datadoghq.com
+#   helm install datadog datadog/datadog -n corndog -f k8s/datadog-values.yaml
+#
+# Upgrade:
+#   helm upgrade datadog datadog/datadog -n corndog -f k8s/datadog-values.yaml
+#
+# Uninstall:
+#   helm uninstall datadog -n corndog
+#
+# Prerequisites:
+#   Secret 'datadog-secret' in corndog namespace with key 'api-key'

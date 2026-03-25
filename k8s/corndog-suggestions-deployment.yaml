@@ -1,51 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: corndog-menu
+  name: corndog-suggestions
   namespace: corndog
   labels:
     app: corndog
-    component: corndog-menu
+    component: corndog-suggestions
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: corndog
-      component: corndog-menu
+      component: corndog-suggestions
   template:
     metadata:
       labels:
         app: corndog
-        component: corndog-menu
+        component: corndog-suggestions
     spec:
       containers:
-        - name: corndog-menu
-          image: corndog/corndog-menu:latest
+        - name: corndog-suggestions
+          image: corndog/corndog-suggestions:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 5002
           env:
-            - name: SPRING_DATASOURCE_URL
+            - name: DATABASE_URL
               valueFrom:
                 configMapKeyRef:
                   name: corndog-config
-                  key: SPRING_DATASOURCE_URL
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: corndog-config
-                  key: SPRING_DATASOURCE_USERNAME
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  name: corndog-config
-                  key: SPRING_DATASOURCE_PASSWORD
+                  key: DATABASE_URL
             - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
             - name: DD_SERVICE
-              value: corndog-menu
+              value: corndog-suggestions
             - name: DD_ENV
               value: demo
             - name: DD_VERSION
@@ -60,3 +50,9 @@ spec:
               value: "true"
             - name: DD_CODE_ORIGIN_FOR_SPANS_ENABLED
               value: "true"
+            - name: DD_LLMOBS_ENABLED
+              value: "1"
+            - name: DD_LLMOBS_ML_APP
+              value: corndog-suggestions
+            - name: OPENAI_API_KEY
+              value: ""

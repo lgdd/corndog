@@ -1,0 +1,35 @@
+datadog:
+  apiKeyExistingSecret: datadog-secret
+  site: datadoghq.com
+  clusterName: corndog
+  tags:
+    - env:demo
+  apm:
+    portEnabled: true
+  logs:
+    enabled: true
+    containerCollectAll: true
+  processAgent:
+    enabled: true
+    processCollection: true
+  networkMonitoring:
+    enabled: true
+  securityAgent:
+    runtime:
+      enabled: true
+    compliance:
+      enabled: true
+      host_benchmarks:
+        enabled: true
+  sbom:
+    enabled: true
+    containerImage:
+      enabled: true
+    host:
+      enabled: true
+  ignoreAutoConfig:
+    - etcd
+    - kube_controller_manager
+    - kube_scheduler
+  kubelet:
+    tlsVerify: false

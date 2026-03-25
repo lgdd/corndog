@@ -34,6 +34,27 @@ spec:
                 name: corndog-admin
                 port:
                   number: 80
+          - path: /api/suggestions
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-suggestions
+                port:
+                  number: 5002
+          - path: /api/loyalty
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-loyalty
+                port:
+                  number: 3000
+          - path: /auth/
+            pathType: Prefix
+            backend:
+              service:
+                name: corndog-auth
+                port:
+                  number: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
