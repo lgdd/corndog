@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-menu
+      annotations:
+        ad.datadoghq.com/corndog-menu.logs: '[{"source":"java","service":"corndog-menu"}]'
     spec:
       containers:
         - name: corndog-menu

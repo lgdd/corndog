@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-loyalty
+      annotations:
+        ad.datadoghq.com/corndog-loyalty.logs: '[{"source":"nodejs","service":"corndog-loyalty"}]'
     spec:
       containers:
         - name: corndog-loyalty

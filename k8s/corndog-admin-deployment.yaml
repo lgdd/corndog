@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-admin
+      annotations:
+        ad.datadoghq.com/corndog-admin.logs: '[{"source":"dotnet","service":"corndog-admin"}]'
     spec:
       containers:
         - name: corndog-admin

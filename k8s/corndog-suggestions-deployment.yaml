@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-suggestions
+      annotations:
+        ad.datadoghq.com/corndog-suggestions.logs: '[{"source":"python","service":"corndog-suggestions"}]'
     spec:
       containers:
         - name: corndog-suggestions
@@ -55,4 +57,8 @@ spec:
             - name: DD_LLMOBS_ML_APP
               value: corndog-suggestions
             - name: OPENAI_API_KEY
-              value: ""
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+                  optional: true

@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-auth
+      annotations:
+        ad.datadoghq.com/corndog-auth.logs: '[{"source":"keycloak","service":"corndog-auth"}]'
     spec:
       containers:
         - name: corndog-auth

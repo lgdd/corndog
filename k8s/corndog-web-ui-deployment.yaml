@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-web-ui
+      annotations:
+        ad.datadoghq.com/corndog-web-ui.logs: '[{"source":"nginx","service":"corndog-web-ui"}]'
     spec:
       containers:
         - name: corndog-web-ui

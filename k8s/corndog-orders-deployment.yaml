@@ -17,6 +17,8 @@ spec:
       labels:
         app: corndog
         component: corndog-orders
+      annotations:
+        ad.datadoghq.com/corndog-orders.logs: '[{"source":"python","service":"corndog-orders"}]'
     spec:
       containers:
         - name: corndog-orders
