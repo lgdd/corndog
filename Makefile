@@ -151,7 +151,7 @@ mk-up:           ## Deploy the full stack to minikube
 	kubectl create secret generic datadog-secret \
 	  --from-literal=api-key=$${DD_API_KEY} \
 	  -n $(MK_NS) --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f $(MK_K8S)/
+	find $(MK_K8S) -name '*.yaml' ! -name 'datadog-values.yaml' -exec kubectl apply -f {} \;
 	@echo "Installing Datadog agent via Helm..."
 	helm repo add datadog https://helm.datadoghq.com 2>/dev/null || true
 	helm upgrade --install datadog datadog/datadog -n $(MK_NS) -f $(MK_K8S)/datadog-values.yaml
