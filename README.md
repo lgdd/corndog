@@ -21,37 +21,57 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 ## Architecture
 
 ```
-                              +---------------+
-                              |    traffic    |
-                              |    Locust     |
-                              +-------+-------+
-                                      |
-                                      | :4200
-                                      |
-                              +-------+-------+
-                              |    web-ui     |
-                              |     Nginx     |
-                              +-------+-------+
-                                      |
-       +------------+--------+--------+--------+------------+
-       |            |        |        |        |            |
-       | /menu      | /orders| /admin | /loyalty| /suggestions
-       |            |        |        |        |            |
-  +----+----+ +-----+-----+ +---+---+ +---+---+ +-----+-----+
-  |  menu   | |  orders   | | admin | |loyalty| |suggestions|
-  |  Spring | |   Flask   | |ASP.NET| |Express| |   Flask   |
-  +----+----+ +-----+-----+ +---+---+ +---+---+ +-----+-----+
-       |            |              |        |          |
-       +------+-----+--------------+--------+----------+
-              |                                        |
-              | :5432                                   | :8126
-              |                                        |
-       +------+------+                         +------+------+
-       |     db      |                         |  dd-agent   |
-       | PostgreSQL  |                         |   Datadog   |
-       +------+------+                         +------+------+
-              |                                        |
-              +----------------- DBM ------------------+
+                       +------------------+
+                       |     traffic      |
+                       |     Locust       |
+                       +--------+---------+
+                                |
+                                | :4200
+                                v
+                       +------------------+
+                       |     web-ui       |
+                       |  Nginx · :4200   |
+                       +--+-+-+--+-+--+---+
+                          | | |  | |  |
+            /api/menu :8080 | |  | |  /api/suggestions :5002
+                          | | |  | |  |
+            +-------------+ | |  | +--+-----------+
+            |               | |  |                |
+            |  /api/orders  | |  | /api/loyalty   |
+            |  :5000        | |  | :3000          |
+            |               | |  |                |
+            |    +----------+ |  +---------+      |
+            |    |            |            |      |
+            |    |  /api/admin :5001       |      |
+            |    |            |            |      |
+            v    v            v            v      v
+  +--------+ +--------+ +--------+ +--------+ +------------+
+  |  menu  | | orders | | admin  | |loyalty | |suggestions |
+  |Spring  | | Flask  | | .NET   | |Express | |  Flask     |
+  | :8080  | | :5000  | | :5001  | | :3000  | |  :5002     |
+  +---+----+ +---+----+ +---+----+ +---+----+ +-----+------+
+      |          |           |         |             |
+      +----------+-----------+---------+-------------+
+                             |
+                             | :5432
+                             v
+                      .-------------.
+                      |  PostgreSQL  |
+                      |    :5432     |
+                      '-------------'
+
+── Infrastructure ─────────────────────────────────
+
+  +------------------+       +------------------+
+  |    Keycloak      |       |  Datadog Agent   |
+  |     :8180        |       |  :8126 / :5140   |
+  +------------------+       +------------------+
+
+  Connections:
+    web-ui /auth/* ──> Keycloak :8180
+    all services ──> dd-agent :8126 (traces)
+    Keycloak ──> dd-agent :5140 (syslog/SIEM)
+    dd-agent ──> PostgreSQL :5432 (DBM)
 ```
 
 Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggestions — and all share a single PostgreSQL database.
