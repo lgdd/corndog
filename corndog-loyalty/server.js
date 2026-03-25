@@ -25,6 +25,13 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(requestContextMiddleware);
 
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    logger.info(`${req.method} ${req.path} ${res.statusCode}`);
+  });
+  next();
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'corndog-loyalty' });
 });
