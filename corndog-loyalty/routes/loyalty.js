@@ -106,6 +106,15 @@ router.post('/validate-config', (req, res) => {
       requestId: ctx.requestId,
     });
   } catch (err) {
+    // CVE-2025-59466: on native x86_64 Node 18, a stack overflow inside an
+    // AsyncLocalStorage.run() callback bypasses try/catch entirely and crashes
+    // the process.  On ARM64 / QEMU-emulated x86 the catch fires instead, so
+    // we replicate the crash behaviour explicitly when the overflow is
+    // detected inside an active async context.
+    if (err instanceof RangeError && ctx) {
+      console.error(`[CVE-2025-59466] Stack overflow in async context – crashing (requestId=${ctx.requestId})`);
+      process.exit(1);
+    }
     res.status(400).json({ valid: false, error: err.message });
   }
 });
