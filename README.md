@@ -15,7 +15,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 | **Code Security — SCA** | Dependency vulnerability scanning (CVEs in pinned libs) |
 | **Workload Protection** | Runtime security (CWS) on containers |
 | **Real User Monitoring** | Browser SDK on Angular SPA — sessions, errors, resources, Session Replay |
-| **Cloud SIEM** | Keycloak auth events via syslog — login, failed login, brute force detection |
+| **Cloud SIEM** | Keycloak auth events via log collection — login, failed login, brute force detection |
 | **LLM Observability** | Auto-instrumented litellm calls — prompts, completions, latency, token usage |
 
 ## Architecture
@@ -55,7 +55,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 
  +------------------+         +------------------+
  |    Keycloak      |         |  Datadog Agent   |
- |     :8180        |         |  :8126 / :5140   |
+ |     :8180        |         |      :8126       |
  +------------------+         +------------------+
 
  Nginx routes:
@@ -68,7 +68,7 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
  Connections:
    web-ui /auth/* ──> Keycloak :8180
    all services ──> dd-agent :8126 (traces)
-   Keycloak ──> dd-agent :5140 (syslog/SIEM)
+   Keycloak ──> dd-agent (logs/SIEM via autodiscovery)
    dd-agent ──> PostgreSQL :5432 (DBM)
 ```
 
@@ -116,7 +116,7 @@ Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggest
 | # | Vulnerability | Service | Endpoint | Details |
 |---|---|---|---|---|
 | 1 | SQL Injection | corndog-orders | `GET /api/orders/search?q=` | Raw string concatenation in SQL query |
-| 2 | XSS (Stored) | corndog-web-ui | Confirmation & admin views | `[innerHTML]` with sanitizer bypass pipe |
+| 2 | XSS (Reflected) | corndog-loyalty | `GET /api/loyalty/card?customer=` | `res.send()` with unsanitized `customer` query param interpolated into HTML |
 | 3 | Command Injection | corndog-orders | `GET /api/orders/{id}/receipt` | Unsanitized `format` param in shell command |
 | 4 | Command Injection | corndog-admin | `POST /api/admin/export` | Unsanitized `filename` in shell command |
 | 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | Frontend has Keycloak guard but backend API does not validate tokens |
@@ -140,7 +140,7 @@ BASE_URL=http://1.2.3.4:4200 make demo-sql-injection  # Against a remote deploy
 | `make demo-sql-injection-union` | UNION-based SQL injection | ASM threat event |
 | `make demo-cmd-injection-receipt` | Command injection via receipt `format` param | ASM threat event |
 | `make demo-cmd-injection-export` | Command injection via admin export `filename` | ASM + IAST tainted data flow |
-| `make demo-xss` | Stored XSS in order special instructions | IAST XSS vulnerability finding |
+| `make demo-xss` | Reflected XSS via loyalty card endpoint | ASM XSS threat event |
 | `make demo-text4shell` | Text4Shell (CVE-2022-42889) via template param | IAST + SCA linked to CVE |
 | `make demo-broken-auth` | Unauthenticated admin API access | ASM broken-auth finding |
 | `make demo-keycloak-failed-login` | Burst of failed Keycloak logins | Cloud SIEM brute-force / credential-stuffing |
@@ -176,7 +176,7 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `check_loyalty_points` | 3 | `GET /api/loyalty/points` | Check customer loyalty points |
 | `admin_list_orders` | 2 | `GET /api/admin/orders` | Broken-auth golden path |
 | `scenario_sqli` | 2 | `GET /api/orders/search` | SQL injection (`' OR 1=1--`) |
-| `scenario_xss` | 2 | `POST /api/orders` | Stored XSS in special instructions |
+| `scenario_xss` | 2 | `GET /api/loyalty/card` | Reflected XSS via `customer` query param |
 | `scenario_sqli_union` | 1 | `GET /api/orders/search` | UNION-based SQL injection |
 | `scenario_cmd_injection_receipt` | 1 | `GET /api/orders/{id}/receipt` | Command injection via `format` param |
 | `scenario_cmd_injection_export` | 1 | `POST /api/admin/export` | Command injection via `filename` |
@@ -267,10 +267,9 @@ Docker Compose and minikube can run in parallel — no port conflicts.
 curl "http://localhost:5000/api/orders/search?q=' OR 1=1--"
 ```
 
-### XSS (corndog-web-ui)
-Place an order with special instructions:
-```
-<img src=x onerror=alert('XSS')>
+### Reflected XSS (corndog-loyalty)
+```bash
+curl "http://localhost:3000/api/loyalty/card?customer=<script>alert('XSS')</script>"
 ```
 
 ### Command Injection — receipt (corndog-orders)
