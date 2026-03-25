@@ -16,11 +16,17 @@ export class AuthService {
   }
 
   init(): Promise<boolean> {
+    // PKCE (S256) and silent-check-sso require the Web Crypto API, which is
+    // only available in secure contexts (HTTPS). Disable both over plain HTTP
+    // so Keycloak auth still works for the demo.
+    const isSecure = window.isSecureContext;
     return this.keycloak.init({
       onLoad: 'check-sso',
-      silentCheckSsoRedirectUri:
-        window.location.origin + '/assets/silent-check-sso.html',
-      checkLoginIframe: false
+      silentCheckSsoRedirectUri: isSecure
+        ? window.location.origin + '/assets/silent-check-sso.html'
+        : undefined,
+      checkLoginIframe: false,
+      pkceMethod: isSecure ? 'S256' : false
     }).then(authenticated => {
       if (authenticated) {
         this.syncRumUser();
