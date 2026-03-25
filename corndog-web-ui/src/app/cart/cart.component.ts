@@ -83,6 +83,13 @@ export class CartComponent implements OnInit, OnDestroy {
     this.cartService.removeFromCart(ci.menuItem.id, ci.sauces);
   }
 
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const emoji = img.nextElementSibling as HTMLElement;
+    if (emoji) emoji.classList.remove('hidden');
+  }
+
   formatSauces(sauces: string[]): string {
     return sauces.map(s => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')).join(', ');
   }

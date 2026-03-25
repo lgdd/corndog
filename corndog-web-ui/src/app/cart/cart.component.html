@@ -12,7 +12,10 @@
     <div *ngIf="items.length > 0" class="cart-content">
       <div class="cart-items card">
         <div class="cart-item" *ngFor="let ci of items">
-          <span class="item-emoji">{{ ci.menuItem.emoji }}</span>
+          <div class="item-thumb">
+            <img *ngIf="ci.menuItem.imageUrl" [src]="ci.menuItem.imageUrl" [alt]="ci.menuItem.name" class="item-img" (error)="onImageError($event)">
+            <span class="item-emoji" [class.hidden]="ci.menuItem.imageUrl">{{ ci.menuItem.emoji }}</span>
+          </div>
           <div class="item-info">
             <span class="item-name">{{ ci.menuItem.name }}</span>
             <span class="item-sauces" *ngIf="ci.sauces.length > 0">{{ formatSauces(ci.sauces) }}</span>
@@ -76,7 +79,10 @@
         </div>
         <div class="suggestions-grid">
           <div class="suggestion-card" *ngFor="let item of suggestions">
-            <span class="suggestion-emoji">{{ item.emoji }}</span>
+            <div class="suggestion-thumb">
+              <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="suggestion-img" (error)="onImageError($event)">
+              <span class="suggestion-emoji" [class.hidden]="item.imageUrl">{{ item.emoji }}</span>
+            </div>
             <div class="suggestion-info">
               <span class="suggestion-name">{{ item.name }}</span>
               <span class="suggestion-price">{{ item.price | currency }}</span>
