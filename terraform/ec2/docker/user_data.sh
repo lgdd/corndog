@@ -42,6 +42,8 @@ DD_API_KEY=${dd_api_key}
 DD_SITE=${dd_site}
 DD_ENV=${dd_env}
 DD_VERSION=1.0.0
+DD_APPLICATION_ID=${dd_application_id}
+DD_CLIENT_TOKEN=${dd_client_token}
 DOTENV
 
 echo ">>> Starting stack"

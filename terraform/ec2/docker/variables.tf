@@ -52,3 +52,15 @@ variable "repo_branch" {
   type        = string
   default     = "main"
 }
+
+variable "dd_application_id" {
+  description = "Datadog RUM Application ID (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "dd_client_token" {
+  description = "Datadog RUM Client Token (optional)"
+  type        = string
+  default     = ""
+}

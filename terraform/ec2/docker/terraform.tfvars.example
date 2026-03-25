@@ -16,3 +16,7 @@ instance_type = "t3.xlarge"
 repo_url    = "https://github.com/lgdd/corndog.git"
 repo_branch = "main"
 
+# Datadog RUM (optional — leave empty to disable RUM)
+# dd_application_id = ""
+# dd_client_token   = ""
+

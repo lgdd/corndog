@@ -125,12 +125,14 @@ resource "aws_instance" "corndog" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    dd_api_key   = var.dd_api_key
-    dd_site      = var.dd_site
-    dd_env       = var.dd_env
-    github_token = var.github_token
-    repo_url     = var.repo_url
-    repo_branch  = var.repo_branch
+    dd_api_key        = var.dd_api_key
+    dd_site           = var.dd_site
+    dd_env            = var.dd_env
+    dd_application_id = var.dd_application_id
+    dd_client_token   = var.dd_client_token
+    github_token      = var.github_token
+    repo_url          = var.repo_url
+    repo_branch       = var.repo_branch
   }))
 
   tags = {
