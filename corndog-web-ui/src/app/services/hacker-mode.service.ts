@@ -105,20 +105,6 @@ export const SCENARIOS: HackerScenario[] = [
     datadogWhereToLook: 'IAST > Vulnerabilities & SCA > Libraries'
   },
   {
-    id: 'dos-json',
-    name: 'DoS via Nested JSON (CVE-2025-59466)',
-    description: 'The loyalty validate-config endpoint recursively processes deeply nested JSON. With AsyncLocalStorage active on Node 18, the stack overflow crashes the process unrecoverably.',
-    steps: [
-      'Open a terminal',
-      'Run the curl command to send deeply nested JSON (~15k levels)',
-      'The corndog-loyalty service crashes and restarts',
-      'Monitor the service recovery in Datadog APM'
-    ],
-    targetRoute: '',
-    curlCommand: `python3 -c "import json; d={'value':'leaf'}; [d:={'rules':d} for _ in range(15000)]; print(json.dumps(d))" | curl -X POST http://localhost:4200/api/loyalty/validate-config -H "Content-Type: application/json" -d @-`,
-    datadogWhereToLook: 'APM > Services > corndog-loyalty & Security > Research Feed'
-  },
-  {
     id: 'keycloak-brute',
     name: 'Keycloak Brute-Force',
     description: 'Rapid failed login attempts against Keycloak generate LOGIN_ERROR events that are sent to the Datadog Agent via syslog, triggering Cloud SIEM detection rules.',

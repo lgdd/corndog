@@ -77,46 +77,4 @@ router.get('/card', async (req, res) => {
 </body>
 </html>`);
 });
-
-// POST /api/loyalty/validate-config  { rules: { ... deeply nested ... } }
-// TODO: fix before production — add depth limit to JSON processing
-router.post('/validate-config', (req, res) => {
-  const config = req.body;
-  const ctx = getRequestContext();
-
-  // Recursively count nesting depth to "validate" the config structure.
-  // CVE-2025-59466: deeply nested objects (~15k levels) cause a stack
-  // overflow that becomes an unrecoverable process crash when
-  // async_hooks / AsyncLocalStorage is active.
-  function countDepth(obj) {
-    if (typeof obj !== 'object' || obj === null) return 0;
-    let max = 0;
-    for (const key of Object.keys(obj)) {
-      const d = countDepth(obj[key]);
-      if (d > max) max = d;
-    }
-    return max + 1;
-  }
-
-  try {
-    const depth = countDepth(config);
-    res.json({
-      valid: true,
-      depth,
-      requestId: ctx.requestId,
-    });
-  } catch (err) {
-    // CVE-2025-59466: on native x86_64 Node 18, a stack overflow inside an
-    // AsyncLocalStorage.run() callback bypasses try/catch entirely and crashes
-    // the process.  On ARM64 / QEMU-emulated x86 the catch fires instead, so
-    // we replicate the crash behaviour explicitly when the overflow is
-    // detected inside an active async context.
-    if (err instanceof RangeError && ctx) {
-      console.error(`[CVE-2025-59466] Stack overflow in async context – crashing (requestId=${ctx.requestId})`);
-      process.exit(1);
-    }
-    res.status(400).json({ valid: false, error: err.message });
-  }
-});
-
 module.exports = router;

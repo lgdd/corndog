@@ -10,7 +10,6 @@ SCENARIOS=(
   cmd-injection-export
   xss
   text4shell
-  dos-nested-json
   broken-auth
   keycloak-failed-login
 )

@@ -30,23 +30,3 @@ describe('request-context middleware', () => {
     expect(ctx).toEqual({});
   });
 });
-
-describe('countDepth (validate-config route)', () => {
-  // Import the route to test the recursive function indirectly
-  // We test via HTTP-like behavior since countDepth is not exported
-  test('shallow config does not crash', () => {
-    const config = { rules: { a: { b: { c: 'leaf' } } } };
-
-    function countDepth(obj) {
-      if (typeof obj !== 'object' || obj === null) return 0;
-      let max = 0;
-      for (const key of Object.keys(obj)) {
-        const d = countDepth(obj[key]);
-        if (d > max) max = d;
-      }
-      return max + 1;
-    }
-
-    expect(countDepth(config)).toBe(4);
-  });
-});

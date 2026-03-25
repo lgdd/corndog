@@ -220,7 +220,6 @@ services:
         condition: service_healthy
       datadog-agent:
         condition: service_healthy
-    restart: on-failure
 
   corndog-auth:
     container_name: corndog-auth
