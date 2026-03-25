@@ -227,6 +227,21 @@ class CorndogUser(HttpUser):
         )
         _extra_latency()
 
+    @task(2)
+    def suggest_pairing(self):
+        """GET /api/suggestions — AI menu pairing suggestion (exercises litellm)."""
+        items = [
+            "Classic Corndog", "Spicy Jalapeño Dog", "Cheese-Stuffed Dog",
+            "Vegan Dog", "BBQ Bacon Dog", "Corndog Poppers",
+        ]
+        item = random.choice(items)
+        self.client.get(
+            f"/api/suggestions?item={item}",
+            headers=HEADERS,
+            name="GET /api/suggestions [golden]",
+        )
+        _extra_latency()
+
     # ── Security failure scenarios ─────────────────────────────
 
     @task(2)

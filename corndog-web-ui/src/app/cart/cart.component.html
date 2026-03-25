@@ -68,5 +68,22 @@
         </ng-container>
       </div>
     </div>
+
+      <div class="suggestions-section card" *ngIf="suggestions.length > 0">
+        <div class="suggestions-header">
+          <h3>You might also like</h3>
+          <span class="ai-badge">AI-powered</span>
+        </div>
+        <div class="suggestions-grid">
+          <div class="suggestion-card" *ngFor="let item of suggestions">
+            <span class="suggestion-emoji">{{ item.emoji }}</span>
+            <div class="suggestion-info">
+              <span class="suggestion-name">{{ item.name }}</span>
+              <span class="suggestion-price">{{ item.price | currency }}</span>
+            </div>
+            <button class="btn btn-sm btn-secondary" (click)="addSuggestion(item)">+ Add</button>
+          </div>
+        </div>
+      </div>
   </ng-container>
 </div>

@@ -142,6 +142,82 @@
   margin-top: 8px;
 }
 
+/* AI Suggestions */
+.suggestions-section {
+  margin-top: 24px;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.suggestions-header h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.ai-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #fff;
+}
+
+.suggestions-grid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.suggestion-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.suggestion-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(99, 44, 166, 0.1);
+}
+
+.suggestion-emoji {
+  font-size: 1.4rem;
+}
+
+.suggestion-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+}
+
+.suggestion-price {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
 @media (max-width: 768px) {
   .cart-content {
     grid-template-columns: 1fr;

@@ -1,28 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { switchMap, map, catchError } from 'rxjs/operators';
 import { CartService, CartItem } from '../services/cart.service';
 import { OrderService } from '../services/order.service';
 import { LoyaltyService } from '../services/loyalty.service';
 import { AuthService } from '../services/auth.service';
+import { MenuService, MenuItem } from '../services/menu.service';
+import { SuggestionService } from '../services/suggestion.service';
 
 @Component({
   selector: 'app-cart',
   templateUrl: './cart.component.html',
   styleUrls: ['./cart.component.css']
 })
-export class CartComponent {
+export class CartComponent implements OnInit, OnDestroy {
   cart$ = this.cartService.cart$;
   cartTotal$ = this.cartService.cartTotal$;
 
   customerName = '';
   specialInstructions = '';
   isSubmitting = false;
+  suggestions: MenuItem[] = [];
+
+  private sub?: Subscription;
 
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
     private loyaltyService: LoyaltyService,
     public auth: AuthService,
+    private menuService: MenuService,
+    private suggestionService: SuggestionService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -34,6 +43,36 @@ export class CartComponent {
     if (this.auth.isLoggedIn()) {
       this.customerName = this.auth.getUsername();
     }
+  }
+
+  ngOnInit(): void {
+    this.sub = this.cart$.pipe(
+      switchMap(items => {
+        if (items.length === 0) return of([]);
+        const cartItemNames = new Set(items.map(ci => ci.menuItem.name));
+        const firstItem = items[0].menuItem.name;
+        return forkJoin([
+          this.suggestionService.getSuggestions(firstItem).pipe(catchError(() => of({ item: firstItem, suggestions: [], model: 'error' }))),
+          this.menuService.getMenu()
+        ]).pipe(
+          map(([res, menu]) => {
+            const suggestedNames = res.suggestions || [];
+            return menu
+              .filter(m => suggestedNames.some(s => m.name.toLowerCase().includes(s.toLowerCase())))
+              .filter(m => !cartItemNames.has(m.name))
+              .slice(0, 3);
+          })
+        );
+      })
+    ).subscribe(suggestions => this.suggestions = suggestions);
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
+
+  addSuggestion(item: MenuItem): void {
+    this.cartService.addToCart(item, []);
   }
 
   updateQuantity(ci: CartItem, quantity: number): void {

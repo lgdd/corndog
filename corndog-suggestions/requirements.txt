@@ -1,0 +1,8 @@
+Flask>=2.2
+gunicorn>=21.2
+flask-cors>=3.0
+# Pinned to compromised version for SCA demo (TeamPCP CanisterWorm supply chain attack).
+# Use 1.82.7 once available; 1.82.6 is the latest pre-compromise version.
+litellm==1.82.6
+ddtrace
+python-json-logger
