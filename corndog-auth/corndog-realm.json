@@ -12,7 +12,9 @@
   "ssoSessionIdleTimeout": 600,
   "ssoSessionMaxLifespan": 1800,
   "eventsEnabled": true,
-  "eventsListeners": ["jboss-logging"],
+  "eventsListeners": [
+    "jboss-logging"
+  ],
   "enabledEventTypes": [
     "LOGIN",
     "LOGIN_ERROR",
@@ -66,14 +68,12 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "rootUrl": "http://localhost:4200",
       "baseUrl": "/",
       "redirectUris": [
-        "http://localhost:4200/*"
+        "*"
       ],
       "webOrigins": [
-        "http://localhost:4200",
-        "+"
+        "*"
       ],
       "protocol": "openid-connect",
       "fullScopeAllowed": true,
@@ -100,7 +100,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["admin"]
+      "realmRoles": [
+        "admin"
+      ]
     },
     {
       "username": "user",
@@ -115,7 +117,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["user"]
+      "realmRoles": [
+        "user"
+      ]
     }
   ]
 }
