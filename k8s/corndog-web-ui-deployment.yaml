@@ -32,6 +32,6 @@ spec:
             - name: DD_SITE
               value: ""
             - name: DD_ENV
-              value: demo
+              value: corndog-260318
             - name: DD_VERSION
               value: "1.0.0"

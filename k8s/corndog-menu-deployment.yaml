@@ -47,7 +47,7 @@ spec:
             - name: DD_SERVICE
               value: corndog-menu
             - name: DD_ENV
-              value: demo
+              value: corndog-260318
             - name: DD_VERSION
               value: "1.0.0"
             - name: DD_APPSEC_ENABLED

@@ -3,7 +3,7 @@ datadog:
   site: datadoghq.com
   clusterName: corndog
   tags:
-    - env:demo
+    - env:corndog-260318
   apm:
     portEnabled: true
   logs:
