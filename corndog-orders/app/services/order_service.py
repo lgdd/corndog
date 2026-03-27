@@ -1,5 +1,4 @@
 import json
-import subprocess
 from datetime import datetime
 from sqlalchemy import text
 from app.models import db, Order
@@ -46,9 +45,16 @@ def generate_receipt(order_id, fmt):
     order = Order.query.get(order_id)
     if not order:
         return None
-    # TODO: fix before production — sanitize format parameter
-    cmd = f"echo 'Receipt for order {order_id}' > /tmp/receipt.{fmt}"
-    subprocess.run(cmd, shell=True)
+    # Only allow safe format values to prevent command injection
+    allowed_formats = {'txt', 'pdf', 'html', 'json'}
+    if fmt not in allowed_formats:
+        fmt = 'txt'  # Default to safe format
+
+    # Use subprocess without shell to avoid command injection
+    filename = f"/tmp/receipt.{fmt}"
+    with open(filename, 'w') as f:
+        f.write(f'Receipt for order {order_id}\n')
+
     return {
         'orderId': order.id,
         'customerName': order.customer_name,
